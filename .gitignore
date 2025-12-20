@@ -1,0 +1,37 @@
+# Build artifacts
+build64/
+build/
+*.obj
+*.exp
+*.lib
+*.pdb
+*.ilk
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+*.egg
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+
+# Claude
+.claude/
+
+# Test outputs
+test_table_output.hwp
+*.hwp
+
+# Compiled modules (keep in _native for distribution)
+# cpyhwpx/_native/*.pyd
+
+# Temporary
+*.tmp
+*.log
+build_output.txt

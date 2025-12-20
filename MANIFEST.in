@@ -1,0 +1,17 @@
+# Include package data
+recursive-include cpyhwpx *.py
+recursive-include cpyhwpx *.pyd
+
+# Include documentation
+include README.md
+include LICENSE
+include cpyhwpx_api.md
+
+# Exclude build artifacts
+prune build
+prune build32
+prune *.egg-info
+prune __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude .DS_Store

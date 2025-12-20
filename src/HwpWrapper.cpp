@@ -398,6 +398,209 @@ bool HwpWrapper::Close(bool is_dirty)
     return RunAction(L"FileClose");
 }
 
+bool HwpWrapper::InsertFile(const std::wstring& filename,
+                             int keep_section,
+                             int keep_charshape,
+                             int keep_parashape,
+                             int keep_style,
+                             bool move_doc_end)
+{
+    if (!m_pHwp) return false;
+
+    HRESULT hr;
+    DISPID dispid;
+    VARIANT result;
+    VariantInit(&result);
+
+    // 1. HParameterSet 속성 가져오기
+    OLECHAR* psetName = const_cast<OLECHAR*>(L"HParameterSet");
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, &psetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                        &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHParameterSet = result.pdispVal;
+
+    // 2. HInsertFile 속성 가져오기
+    OLECHAR* insertFileName = const_cast<OLECHAR*>(L"HInsertFile");
+    hr = pHParameterSet->GetIDsOfNames(IID_NULL, &insertFileName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHParameterSet->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHParameterSet->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    pHParameterSet->Release();
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHInsertFile = result.pdispVal;
+
+    // 3. HSet 속성 가져오기
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pHInsertFile->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHInsertFile->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHInsertFile->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                               &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) {
+        pHInsertFile->Release();
+        return false;
+    }
+
+    IDispatch* pHSet = result.pdispVal;
+
+    // 4. HAction 가져오기
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pHSet->Release();
+        pHInsertFile->Release();
+        return false;
+    }
+
+    // 5. HAction.GetDefault("InsertFile", HSet) 호출
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHSet->Release();
+        pHInsertFile->Release();
+        return false;
+    }
+
+    VARIANT getDefaultArgs[2];
+    VariantInit(&getDefaultArgs[0]);
+    VariantInit(&getDefaultArgs[1]);
+    getDefaultArgs[0].vt = VT_DISPATCH;
+    getDefaultArgs[0].pdispVal = pHSet;
+    getDefaultArgs[1].vt = VT_BSTR;
+    getDefaultArgs[1].bstrVal = SysAllocString(L"InsertFile");
+
+    DISPPARAMS getDefaultParams = { getDefaultArgs, NULL, 2, 0 };
+    VariantInit(&result);
+    hr = pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &getDefaultParams, &result, NULL, NULL);
+    SysFreeString(getDefaultArgs[1].bstrVal);
+
+    // 6. 파라미터 설정: filename
+    OLECHAR* filenamePropName = const_cast<OLECHAR*>(L"filename");
+    hr = pHInsertFile->GetIDsOfNames(IID_NULL, &filenamePropName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT filenameVal;
+        VariantInit(&filenameVal);
+        filenameVal.vt = VT_BSTR;
+        filenameVal.bstrVal = SysAllocString(filename.c_str());
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS filenameParams = { &filenameVal, &putid, 1, 1 };
+        pHInsertFile->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                              &filenameParams, NULL, NULL, NULL);
+        SysFreeString(filenameVal.bstrVal);
+    }
+
+    // 7. 파라미터 설정: KeepSection
+    OLECHAR* keepSectionName = const_cast<OLECHAR*>(L"KeepSection");
+    hr = pHInsertFile->GetIDsOfNames(IID_NULL, &keepSectionName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT keepVal;
+        VariantInit(&keepVal);
+        keepVal.vt = VT_I4;
+        keepVal.lVal = keep_section;
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS keepParams = { &keepVal, &putid, 1, 1 };
+        pHInsertFile->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                              &keepParams, NULL, NULL, NULL);
+    }
+
+    // 8. 파라미터 설정: KeepCharshape
+    OLECHAR* keepCharshapeName = const_cast<OLECHAR*>(L"KeepCharshape");
+    hr = pHInsertFile->GetIDsOfNames(IID_NULL, &keepCharshapeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT keepVal;
+        VariantInit(&keepVal);
+        keepVal.vt = VT_I4;
+        keepVal.lVal = keep_charshape;
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS keepParams = { &keepVal, &putid, 1, 1 };
+        pHInsertFile->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                              &keepParams, NULL, NULL, NULL);
+    }
+
+    // 9. 파라미터 설정: KeepParashape
+    OLECHAR* keepParashapeName = const_cast<OLECHAR*>(L"KeepParashape");
+    hr = pHInsertFile->GetIDsOfNames(IID_NULL, &keepParashapeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT keepVal;
+        VariantInit(&keepVal);
+        keepVal.vt = VT_I4;
+        keepVal.lVal = keep_parashape;
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS keepParams = { &keepVal, &putid, 1, 1 };
+        pHInsertFile->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                              &keepParams, NULL, NULL, NULL);
+    }
+
+    // 10. 파라미터 설정: KeepStyle
+    OLECHAR* keepStyleName = const_cast<OLECHAR*>(L"KeepStyle");
+    hr = pHInsertFile->GetIDsOfNames(IID_NULL, &keepStyleName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT keepVal;
+        VariantInit(&keepVal);
+        keepVal.vt = VT_I4;
+        keepVal.lVal = keep_style;
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS keepParams = { &keepVal, &putid, 1, 1 };
+        pHInsertFile->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                              &keepParams, NULL, NULL, NULL);
+    }
+
+    // 11. HAction.Execute("InsertFile", HSet) 호출
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHSet->Release();
+        pHInsertFile->Release();
+        return false;
+    }
+
+    VARIANT executeArgs[2];
+    VariantInit(&executeArgs[0]);
+    VariantInit(&executeArgs[1]);
+    executeArgs[0].vt = VT_DISPATCH;
+    executeArgs[0].pdispVal = pHSet;
+    executeArgs[1].vt = VT_BSTR;
+    executeArgs[1].bstrVal = SysAllocString(L"InsertFile");
+
+    DISPPARAMS executeParams = { executeArgs, NULL, 2, 0 };
+    VariantInit(&result);
+    hr = pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &executeParams, &result, NULL, NULL);
+    SysFreeString(executeArgs[1].bstrVal);
+
+    pHSet->Release();
+    pHInsertFile->Release();
+
+    bool success = SUCCEEDED(hr) && (result.vt == VT_BOOL ? result.boolVal != VARIANT_FALSE : true);
+
+    // 12. move_doc_end 처리
+    if (success && move_doc_end) {
+        MovePos(3, 0, 0);  // moveDocEnd = 3
+    }
+
+    return success;
+}
+
 //=============================================================================
 // 텍스트 편집
 //=============================================================================

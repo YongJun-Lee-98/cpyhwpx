@@ -165,6 +165,23 @@ public:
      */
     bool Close(bool is_dirty = false);
 
+    /**
+     * @brief 현재 위치에 파일 삽입
+     * @param filename 삽입할 파일 경로
+     * @param keep_section 구간 정보 유지 (1=유지, 0=무시)
+     * @param keep_charshape 문자 모양 유지
+     * @param keep_parashape 문단 모양 유지
+     * @param keep_style 스타일 유지
+     * @param move_doc_end 삽입 후 문서 끝으로 이동
+     * @return 성공 여부
+     */
+    bool InsertFile(const std::wstring& filename,
+                    int keep_section = 1,
+                    int keep_charshape = 1,
+                    int keep_parashape = 1,
+                    int keep_style = 1,
+                    bool move_doc_end = false);
+
     //=========================================================================
     // 텍스트 편집
     //=========================================================================

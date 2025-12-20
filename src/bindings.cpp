@@ -193,6 +193,14 @@ PYBIND11_MODULE(cpyhwpx, m) {
         .def("close", &cpyhwpx::HwpWrapper::Close,
              py::arg("is_dirty") = false,
              "문서 닫기")
+        .def("insert_file", &cpyhwpx::HwpWrapper::InsertFile,
+             py::arg("filename"),
+             py::arg("keep_section") = 1,
+             py::arg("keep_charshape") = 1,
+             py::arg("keep_parashape") = 1,
+             py::arg("keep_style") = 1,
+             py::arg("move_doc_end") = false,
+             "현재 위치에 파일 삽입 (keep_*: 1=유지, 0=무시)")
 
         // 텍스트 편집
         .def("insert_text", &cpyhwpx::HwpWrapper::InsertText,

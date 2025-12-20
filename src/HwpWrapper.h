@@ -517,6 +517,31 @@ public:
     bool TableRightCellAppend();
 
     //=========================================================================
+    // 이미지 삽입
+    //=========================================================================
+
+    /**
+     * @brief 이미지 삽입
+     * @param path 이미지 파일 경로 (절대 경로 권장)
+     * @param embedded 문서 내 포함 여부 (기본: true)
+     * @param sizeoption 크기 옵션 (0=원본, 1=지정, 2=셀맞춤, 3=셀맞춤+종횡비)
+     * @param reverse 반전 여부 (기본: false)
+     * @param watermark 워터마크 효과 (기본: false)
+     * @param effect 이미지 효과 (0=원본, 1=그레이스케일, 2=흑백)
+     * @param width 너비 (mm, sizeoption=1일 때 사용)
+     * @param height 높이 (mm, sizeoption=1일 때 사용)
+     * @return 성공 여부
+     */
+    bool InsertPicture(const std::wstring& path,
+                       bool embedded = true,
+                       int sizeoption = 0,
+                       bool reverse = false,
+                       bool watermark = false,
+                       int effect = 0,
+                       int width = 0,
+                       int height = 0);
+
+    //=========================================================================
     // HAction 관련
     //=========================================================================
 

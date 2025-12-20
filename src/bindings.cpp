@@ -360,7 +360,21 @@ PYBIND11_MODULE(cpyhwpx, m) {
         .def("table_lower_cell", &cpyhwpx::HwpWrapper::TableLowerCell,
              "아래쪽 셀로 이동")
         .def("table_right_cell_append", &cpyhwpx::HwpWrapper::TableRightCellAppend,
-             "오른쪽 셀로 이동 (행 끝이면 다음 행)");
+             "오른쪽 셀로 이동 (행 끝이면 다음 행)")
+
+        //=========================================================================
+        // 이미지 삽입 (Image Insertion)
+        //=========================================================================
+        .def("insert_picture", &cpyhwpx::HwpWrapper::InsertPicture,
+             py::arg("path"),
+             py::arg("embedded") = true,
+             py::arg("sizeoption") = 0,
+             py::arg("reverse") = false,
+             py::arg("watermark") = false,
+             py::arg("effect") = 0,
+             py::arg("width") = 0,
+             py::arg("height") = 0,
+             "이미지 삽입 (sizeoption: 0=원본, 1=지정크기, 2=셀맞춤, 3=셀맞춤+종횡비)");
 
     //=========================================================================
     // HwpCtrl 클래스 바인딩

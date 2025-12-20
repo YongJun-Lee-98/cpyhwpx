@@ -2229,4 +2229,57 @@ bool HwpWrapper::TableRightCellAppend()
     return RunAction(L"TableRightCellAppend");
 }
 
+//=============================================================================
+// 이미지 삽입 (Image Insertion)
+//=============================================================================
+
+bool HwpWrapper::InsertPicture(const std::wstring& path,
+                                bool embedded,
+                                int sizeoption,
+                                bool reverse,
+                                bool watermark,
+                                int effect,
+                                int width,
+                                int height)
+{
+    if (!m_pHwp) return false;
+
+    DISPID dispid = m_dispidCache.GetOrLoad(m_pHwp, L"InsertPicture");
+    if (dispid == DISPID_UNKNOWN) return false;
+
+    // InsertPicture 파라미터 (역순)
+    // Path, Embedded, sizeoption, Reverse, watermark, Effect, Width, Height
+    VARIANT args[8];
+    for (int i = 0; i < 8; i++) VariantInit(&args[i]);
+
+    // 역순으로 인자 설정
+    args[0].vt = VT_I4;    args[0].lVal = height;                                    // Height
+    args[1].vt = VT_I4;    args[1].lVal = width;                                     // Width
+    args[2].vt = VT_I4;    args[2].lVal = effect;                                    // Effect
+    args[3].vt = VT_BOOL;  args[3].boolVal = watermark ? VARIANT_TRUE : VARIANT_FALSE; // watermark
+    args[4].vt = VT_BOOL;  args[4].boolVal = reverse ? VARIANT_TRUE : VARIANT_FALSE;   // Reverse
+    args[5].vt = VT_I4;    args[5].lVal = sizeoption;                                // sizeoption
+    args[6].vt = VT_BOOL;  args[6].boolVal = embedded ? VARIANT_TRUE : VARIANT_FALSE;  // Embedded
+    args[7].vt = VT_BSTR;  args[7].bstrVal = SysAllocString(path.c_str());           // Path
+
+    DISPPARAMS params = { args, NULL, 8, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    HRESULT hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT,
+                                DISPATCH_METHOD, &params, &result, NULL, NULL);
+
+    SysFreeString(args[7].bstrVal);
+
+    // InsertPicture는 컨트롤 객체 반환 (성공 시 VT_DISPATCH)
+    bool success = SUCCEEDED(hr) && result.vt == VT_DISPATCH && result.pdispVal != nullptr;
+
+    if (result.vt == VT_DISPATCH && result.pdispVal) {
+        result.pdispVal->Release();
+    }
+    VariantClear(&result);
+
+    return success;
+}
+
 } // namespace cpyhwpx

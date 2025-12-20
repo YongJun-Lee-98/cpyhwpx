@@ -9,6 +9,8 @@
 #pragma once
 
 #include "HwpTypes.h"
+#include "XHwpDocument.h"
+#include "XHwpDocuments.h"
 #include <Windows.h>
 #include <comdef.h>
 #include <oleidl.h>  // IOleWindow, IOleObject 지원
@@ -68,8 +70,11 @@ public:
      * @brief HwpWrapper 생성자
      * @param visible 창 표시 여부 (기본: true)
      * @param new_instance 새 인스턴스 생성 여부 (기본: true)
+     * @param register_module 보안 모듈 자동 등록 여부 (기본: true, pyhwpx 호환)
      */
-    HwpWrapper(bool visible = true, bool new_instance = true);
+    HwpWrapper(bool visible = true,
+               bool new_instance = true,
+               bool register_module = true);
 
     /**
      * @brief 소멸자 - COM 리소스 해제
@@ -93,13 +98,44 @@ public:
     bool Initialize();
 
     /**
-     * @brief 보안 모듈 등록
+     * @brief 보안 모듈 등록 (COM API 직접 호출)
      * @param module_type 모듈 유형 ("FilePathCheckDLL" 등)
      * @param module_data 모듈 경로
      * @return 성공 여부
      */
     bool RegisterModule(const std::wstring& module_type,
                         const std::wstring& module_data);
+
+    /**
+     * @brief 보안 모듈 레지스트리 등록 여부 확인
+     * @param key_name 모듈 이름 (기본: "FilePathCheckerModule")
+     * @return 등록되어 있으면 true
+     */
+    static bool CheckRegistryKey(const std::wstring& key_name = L"FilePathCheckerModule");
+
+    /**
+     * @brief 보안 모듈 DLL을 레지스트리에 등록
+     * @param dll_path DLL 파일 경로 (빈 문자열이면 자동 감지)
+     * @param key_name 등록할 키 이름
+     * @return 성공 여부
+     */
+    static bool RegisterToRegistry(const std::wstring& dll_path = L"",
+                                    const std::wstring& key_name = L"FilePathCheckerModule");
+
+    /**
+     * @brief DLL 파일 경로 자동 감지
+     * @return DLL 파일 전체 경로 (없으면 빈 문자열)
+     */
+    static std::wstring FindDllPath();
+
+    /**
+     * @brief 보안 모듈 자동 등록 (check + regedit + RegisterModule)
+     * @param module_type 모듈 타입 (기본: "FilePathCheckDLL")
+     * @param module_data 모듈 데이터 (기본: "FilePathCheckerModule")
+     * @return 성공 여부
+     */
+    bool AutoRegisterModule(const std::wstring& module_type = L"FilePathCheckDLL",
+                            const std::wstring& module_data = L"FilePathCheckerModule");
 
     /**
      * @brief HWP 종료
@@ -182,6 +218,62 @@ public:
                     int keep_style = 1,
                     bool move_doc_end = false);
 
+    /**
+     * @brief 문서 텍스트 추출 (GetTextFile API)
+     * @param format 형식 ("HWP", "HWPML2X", "HTML", "UNICODE", "TEXT")
+     * @param option 옵션 ("saveblock:true"=선택 블록만, ""=전체)
+     * @return 추출된 텍스트 (형식에 따라 다름)
+     *
+     * format 상세:
+     * - "HWP": BASE64 인코딩, 모든 정보 유지 (가장 효율적)
+     * - "HWPML2X": XML 형식, 모든 정보 유지
+     * - "HTML": HTML 형식, 표 번호 유지
+     * - "UNICODE": 유니코드 텍스트 (서식정보 없음)
+     * - "TEXT": 일반 텍스트 (특수문자 손실)
+     */
+    std::wstring GetTextFile(const std::wstring& format = L"UNICODE",
+                             const std::wstring& option = L"");
+
+    /**
+     * @brief 텍스트 데이터 삽입 (SetTextFile API)
+     * @param data GetTextFile로 추출한 텍스트 데이터
+     * @param format 형식 ("HWP", "HWPML2X", "HTML", "UNICODE", "TEXT")
+     * @param option 옵션 ("insertfile"=현재 커서에 삽입)
+     * @return 성공 1, 실패 0
+     */
+    int SetTextFile(const std::wstring& data,
+                    const std::wstring& format = L"HWPML2X",
+                    const std::wstring& option = L"insertfile");
+
+    /**
+     * @brief PDF 파일 열기
+     * pyhwpx의 open_pdf()에 대응
+     * @param pdfPath PDF 파일 경로
+     * @param thisWindow 현재 창에 열기 (1=현재창, 0=새창)
+     * @return 성공 여부
+     */
+    bool OpenPdf(const std::wstring& pdfPath, int thisWindow = 1);
+
+    /**
+     * @brief 선택 블록을 파일로 저장
+     * pyhwpx의 save_block_as()에 대응
+     * @param path 저장 경로
+     * @param format 파일 형식 (기본: "HWP")
+     * @param attributes 저장 속성 (기본: 1)
+     * @return 성공 여부
+     */
+    bool SaveBlockAs(const std::wstring& path,
+                     const std::wstring& format = L"HWP",
+                     int attributes = 1);
+
+    /**
+     * @brief 파일 정보 조회
+     * pyhwpx의 get_file_info()에 대응
+     * @param filename 파일 경로
+     * @return 파일 정보 맵 (Format, VersionStr, VersionNum, Encrypted)
+     */
+    std::map<std::wstring, std::wstring> GetFileInfo(const std::wstring& filename);
+
     //=========================================================================
     // 텍스트 편집
     //=========================================================================
@@ -233,6 +325,83 @@ public:
      * @return 성공 여부
      */
     bool MovePos(int move_id, int para = 0, int pos = 0);
+
+    /**
+     * @brief 텍스트 스캔 초기화
+     * pyhwpx의 init_scan()에 대응
+     * @param option 검색 대상 (0x07: maskNormal|maskChar|maskInline|maskCtrl)
+     * @param range 검색 범위 (0x77: 문서 전체, 0xff: 선택 블록)
+     * @param spara 시작 문단 번호
+     * @param spos 시작 위치
+     * @param epara 끝 문단 번호 (-1: 끝까지)
+     * @param epos 끝 위치 (-1: 끝까지)
+     * @return 성공 여부
+     */
+    bool InitScan(int option = 0x07, int range = 0x77,
+                  int spara = 0, int spos = 0, int epara = -1, int epos = -1);
+
+    /**
+     * @brief 텍스트 스캔 해제
+     * pyhwpx의 release_scan()에 대응
+     */
+    void ReleaseScan();
+
+    /**
+     * @brief 텍스트 선택
+     * pyhwpx의 select_text()에 대응
+     * @param spara 시작 문단 번호
+     * @param spos 시작 위치
+     * @param epara 끝 문단 번호
+     * @param epos 끝 위치 (-1: 문단 끝)
+     * @param slist 시작 리스트 ID (기본: 0)
+     * @return 성공 여부
+     */
+    bool SelectText(int spara, int spos, int epara, int epos, int slist = 0);
+
+    /**
+     * @brief GetPos 튜플로 텍스트 선택
+     * pyhwpx의 select_text_by_get_pos()에 대응
+     * @param s_pos 시작 위치 (list, para, pos)
+     * @param e_pos 끝 위치 (list, para, pos)
+     * @return 성공 여부
+     */
+    bool SelectTextByGetPos(const HwpPos& s_pos, const HwpPos& e_pos);
+
+    /**
+     * @brief ParameterSet으로 위치 정보 조회 (내부용)
+     * pyhwpx의 get_pos_by_set()에 대응
+     * @return ParameterSet (List, Para, Pos 포함)
+     */
+    IDispatch* GetPosBySet();
+
+    /**
+     * @brief ParameterSet으로 위치 설정 (내부용)
+     * pyhwpx의 set_pos_by_set()에 대응
+     * @param pDispVal GetPosBySet()에서 반환된 ParameterSet
+     * @return 성공 여부
+     */
+    bool SetPosBySet(IDispatch* pDispVal);
+
+    /**
+     * @brief Python용 위치 정보 조회
+     * IDispatch*를 캐시에 저장하고 인덱스 반환
+     * @return 캐시 인덱스 (-1: 실패)
+     */
+    int GetPosBySetPy();
+
+    /**
+     * @brief Python용 위치 설정
+     * 캐시에서 인덱스로 IDispatch*를 꺼내서 설정
+     * @param idx GetPosBySetPy()에서 반환된 인덱스
+     * @return 성공 여부
+     */
+    bool SetPosBySetPy(int idx);
+
+    /**
+     * @brief 위치 캐시 정리
+     * COM 객체 Release 및 캐시 초기화
+     */
+    void ClearPosCache();
 
     //=========================================================================
     // 창/UI 관리
@@ -533,6 +702,139 @@ public:
      */
     bool TableRightCellAppend();
 
+    /**
+     * @brief 첫 번째 열로 이동
+     */
+    bool TableColBegin();
+
+    /**
+     * @brief 마지막 열로 이동
+     */
+    bool TableColEnd();
+
+    /**
+     * @brief 열의 맨 위로 이동
+     */
+    bool TableColPageUp();
+
+    /**
+     * @brief 셀 블록 선택 확장 (절대)
+     */
+    bool TableCellBlockExtendAbs();
+
+    /**
+     * @brief 선택 취소 (ESC)
+     */
+    bool Cancel();
+
+    /**
+     * @brief 셀 배경색 채우기
+     * @param r Red (0-255, 기본: 217)
+     * @param g Green (0-255, 기본: 217)
+     * @param b Blue (0-255, 기본: 217)
+     * @return 성공 여부
+     */
+    bool CellFill(int r = 217, int g = 217, int b = 217);
+
+    /**
+     * @brief 2D 벡터 데이터로 테이블 생성
+     * @param data 2D 문자열 벡터 (첫 행은 헤더)
+     * @param treat_as_char 글자처럼 취급 (기본: false)
+     * @param header 제목행 설정 (기본: true)
+     * @param header_bold 헤더에 볼드 적용 (기본: true)
+     * @param cell_fill_r 헤더 배경색 R (-1이면 미적용)
+     * @param cell_fill_g 헤더 배경색 G
+     * @param cell_fill_b 헤더 배경색 B
+     * @return 성공 여부
+     */
+    bool TableFromData(
+        const std::vector<std::vector<std::wstring>>& data,
+        bool treat_as_char = false,
+        bool header = true,
+        bool header_bold = true,
+        int cell_fill_r = -1,
+        int cell_fill_g = -1,
+        int cell_fill_b = -1);
+
+    /**
+     * @brief 현재 테이블의 XML 추출 (HWPML2X 형식)
+     * @return XML 문자열 (실패 시 빈 문자열)
+     *
+     * Python의 table_to_df()에서 파싱하여 DataFrame으로 변환.
+     * 병합 셀 포함 모든 셀 데이터 정확히 추출 가능.
+     */
+    std::wstring GetTableXml();
+
+    //=========================================================================
+    // 스타일 관리 (CharShape/ParaShape)
+    //=========================================================================
+
+    /**
+     * @brief 현재 글자모양 가져오기
+     * @return 글자모양 속성 맵 (Height, Bold, Italic, FaceNameHangul 등)
+     *
+     * pyhwpx의 get_charshape()에 대응.
+     * HAction.GetDefault("CharShape")로 현재 설정을 가져옴.
+     */
+    std::map<std::wstring, int> GetCharShape();
+
+    /**
+     * @brief 글자모양 설정
+     * @param props 설정할 속성 맵
+     * @return 성공 여부
+     *
+     * pyhwpx의 set_charshape()에 대응.
+     * 선택 영역에 글자모양 적용.
+     */
+    bool SetCharShape(const std::map<std::wstring, int>& props);
+
+    /**
+     * @brief 글자모양 간편 설정
+     * @param face_name 글꼴 이름 (빈 문자열이면 미변경)
+     * @param height 글자 크기 (pt * 100, 예: 10pt = 1000, -1이면 미변경)
+     * @param bold 볼드 (0=해제, 1=설정, -1=미변경)
+     * @param italic 이탤릭 (0=해제, 1=설정, -1=미변경)
+     * @param text_color 글자색 RGB (COLORREF, -1이면 미변경)
+     * @return 성공 여부
+     *
+     * 자주 사용하는 글자모양 속성을 간편하게 설정.
+     */
+    bool SetFont(const std::wstring& face_name = L"",
+                 int height = -1,
+                 int bold = -1,
+                 int italic = -1,
+                 int text_color = -1);
+
+    /**
+     * @brief 현재 문단모양 가져오기
+     * @return 문단모양 속성 맵 (AlignType, LineSpacing, LeftMargin 등)
+     *
+     * pyhwpx의 get_parashape()에 대응.
+     */
+    std::map<std::wstring, int> GetParaShape();
+
+    /**
+     * @brief 문단모양 설정
+     * @param props 설정할 속성 맵
+     * @return 성공 여부
+     *
+     * pyhwpx의 set_parashape()에 대응.
+     */
+    bool SetParaShape(const std::map<std::wstring, int>& props);
+
+    /**
+     * @brief 문단모양 간편 설정
+     * @param align_type 정렬 (0=양쪽, 1=왼쪽, 2=가운데, 3=오른쪽, -1=미변경)
+     * @param line_spacing 줄간격 (%, -1이면 미변경)
+     * @param left_margin 왼쪽 여백 (HwpUnit, -1이면 미변경)
+     * @param indentation 첫줄 들여쓰기 (HwpUnit, -1이면 미변경)
+     * @return 성공 여부
+     */
+    bool SetPara(int align_type = -1,
+                 int line_spacing = -1,
+                 int left_margin = -1,
+                 int indentation = -1);
+
     //=========================================================================
     // 이미지 삽입
     //=========================================================================
@@ -585,12 +887,40 @@ public:
      */
     bool FindCtrl();
 
+    //=========================================================================
+    // 컨트롤 관리
+    //=========================================================================
+
     /**
-     * @brief ParameterSet으로 위치 설정 (SetPosBySet API)
-     * @param pDispVal GetAnchorPos 등에서 반환된 ParameterSet
+     * @brief 컨트롤 삽입
+     * @param ctrl_id 컨트롤 ID ("tbl"=표, "pic"=그림, "gso"=도형, "eqed"=수식 등)
+     * @param initparam 초기 파라미터셋 (nullptr이면 기본값)
+     * @return 생성된 컨트롤 (실패 시 nullptr)
+     *
+     * 사용 예시:
+     * ```cpp
+     * // 표 삽입
+     * auto pset = hwp.CreateSet(L"TableCreation");
+     * // ... 파라미터 설정 ...
+     * auto ctrl = hwp.InsertCtrl(L"tbl", pset);
+     * ```
+     */
+    std::unique_ptr<HwpCtrl> InsertCtrl(const std::wstring& ctrl_id,
+                                         IDispatch* initparam = nullptr);
+
+    /**
+     * @brief 컨트롤 삭제
+     * @param ctrl 삭제할 컨트롤
      * @return 성공 여부
      */
-    bool SetPosBySet(IDispatch* pDispVal);
+    bool DeleteCtrl(HwpCtrl* ctrl);
+
+    /**
+     * @brief COM 객체로 컨트롤 삭제
+     * @param pCtrl 삭제할 컨트롤 COM 객체
+     * @return 성공 여부
+     */
+    bool DeleteCtrl(IDispatch* pCtrl);
 
     //=========================================================================
     // 속성 접근
@@ -626,6 +956,75 @@ public:
      */
     bool GetEditMode();
     void SetEditMode(bool mode);
+
+    //=========================================================================
+    // 컨트롤 속성 접근
+    //=========================================================================
+
+    /**
+     * @brief 현재 선택된 컨트롤
+     * pyhwpx의 CurSelectedCtrl에 대응
+     * @return 선택된 컨트롤 (없으면 nullptr)
+     */
+    std::unique_ptr<HwpCtrl> GetCurSelectedCtrl();
+
+    /**
+     * @brief 문서의 첫 번째 컨트롤 (항상 secd)
+     * pyhwpx의 HeadCtrl에 대응
+     * @return 첫 번째 컨트롤
+     */
+    std::unique_ptr<HwpCtrl> GetHeadCtrl();
+
+    /**
+     * @brief 문서의 마지막 컨트롤
+     * pyhwpx의 LastCtrl에 대응
+     * @return 마지막 컨트롤
+     */
+    std::unique_ptr<HwpCtrl> GetLastCtrl();
+
+    /**
+     * @brief 현재 위치를 포함하는 상위 컨트롤
+     * pyhwpx의 ParentCtrl에 대응
+     * @return 부모 컨트롤 (없으면 nullptr)
+     */
+    std::unique_ptr<HwpCtrl> GetParentCtrl();
+
+    /**
+     * @brief 문서 내 모든 사용자 컨트롤 목록
+     * pyhwpx의 ctrl_list에 대응
+     * secd(섹션정의)와 cold(단정의)는 제외
+     * @return 컨트롤 목록
+     */
+    std::vector<std::unique_ptr<HwpCtrl>> GetCtrlList();
+
+    //=========================================================================
+    // 문서 컬렉션 접근
+    //=========================================================================
+
+    /**
+     * @brief XHwpDocuments 컬렉션 접근
+     * @return 문서 컬렉션
+     */
+    std::unique_ptr<XHwpDocuments> GetXHwpDocuments();
+
+    /**
+     * @brief 문서 전환
+     * @param num 문서 인덱스 (0-based)
+     * @return 활성화된 문서 (nullptr이면 실패)
+     */
+    std::unique_ptr<XHwpDocument> SwitchTo(int num);
+
+    /**
+     * @brief 새 탭으로 문서 추가
+     * @return 추가된 문서
+     */
+    std::unique_ptr<XHwpDocument> AddTab();
+
+    /**
+     * @brief 새 창으로 문서 추가
+     * @return 추가된 문서
+     */
+    std::unique_ptr<XHwpDocument> AddDoc();
 
     //=========================================================================
     // COM 인터페이스 직접 접근 (고급)
@@ -687,8 +1086,10 @@ private:
     bool m_bInitialized;            // 초기화 완료 여부
     bool m_bVisible;                // 창 표시 여부
     bool m_bNewInstance;            // 새 인스턴스 여부
+    bool m_bRegisterModule;         // 보안 모듈 자동 등록 여부 (pyhwpx 호환)
 
     DISPIDCache m_dispidCache;      // DISPID 캐시 (성능 최적화)
+    std::vector<IDispatch*> m_posCache;  // GetPosBySet 결과 캐시 (Python용)
 
     /**
      * @brief COM 초기화

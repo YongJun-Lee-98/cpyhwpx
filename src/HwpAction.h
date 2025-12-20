@@ -196,6 +196,8 @@ public:
     static bool TableDeleteColumn(HwpWrapper* hwp);
     static bool TableMergeCell(HwpWrapper* hwp);
     static bool TableSplitCell(HwpWrapper* hwp);
+    static bool TableColPageUp(HwpWrapper* hwp);
+    static bool TableCellBlockExtendAbs(HwpWrapper* hwp);
 
     // 스타일
     static bool ParagraphShapeAlignLeft(HwpWrapper* hwp);
@@ -223,13 +225,459 @@ public:
     static bool FilePrint(HwpWrapper* hwp);
     static bool FilePrintPreview(HwpWrapper* hwp);
 
-    // 개체
+    // 개체 (기존)
     static bool ShapeObjSelect(HwpWrapper* hwp);
     static bool ShapeObjDelete(HwpWrapper* hwp);
     static bool ShapeObjCopy(HwpWrapper* hwp);
     static bool ShapeObjCut(HwpWrapper* hwp);
     static bool ShapeObjBringToFront(HwpWrapper* hwp);
     static bool ShapeObjSendToBack(HwpWrapper* hwp);
+
+    //=========================================================================
+    // 추가 Run 액션들
+    //=========================================================================
+
+    // Break (추가)
+    static bool BreakLine(HwpWrapper* hwp);
+    static bool BreakColDef(HwpWrapper* hwp);
+
+    // CharShape (추가)
+    static bool CharShapeCenterline(HwpWrapper* hwp);
+    static bool CharShapeEmboss(HwpWrapper* hwp);
+    static bool CharShapeEngrave(HwpWrapper* hwp);
+    static bool CharShapeHeight(HwpWrapper* hwp);
+    static bool CharShapeHeightDecrease(HwpWrapper* hwp);
+    static bool CharShapeHeightIncrease(HwpWrapper* hwp);
+    static bool CharShapeLang(HwpWrapper* hwp);
+    static bool CharShapeNextFaceName(HwpWrapper* hwp);
+    static bool CharShapeNormal(HwpWrapper* hwp);
+    static bool CharShapeOutline(HwpWrapper* hwp);
+    static bool CharShapePrevFaceName(HwpWrapper* hwp);
+    static bool CharShapeShadow(HwpWrapper* hwp);
+    static bool CharShapeSpacing(HwpWrapper* hwp);
+    static bool CharShapeSpacingDecrease(HwpWrapper* hwp);
+    static bool CharShapeSpacingIncrease(HwpWrapper* hwp);
+    static bool CharShapeSuperSubscript(HwpWrapper* hwp);
+    static bool CharShapeTextColorBlack(HwpWrapper* hwp);
+    static bool CharShapeTextColorBlue(HwpWrapper* hwp);
+    static bool CharShapeTextColorBluish(HwpWrapper* hwp);
+    static bool CharShapeTextColorGreen(HwpWrapper* hwp);
+    static bool CharShapeTextColorRed(HwpWrapper* hwp);
+    static bool CharShapeTextColorViolet(HwpWrapper* hwp);
+    static bool CharShapeTextColorWhite(HwpWrapper* hwp);
+    static bool CharShapeTextColorYellow(HwpWrapper* hwp);
+    static bool CharShapeTypeface(HwpWrapper* hwp);
+    static bool CharShapeWidth(HwpWrapper* hwp);
+    static bool CharShapeWidthDecrease(HwpWrapper* hwp);
+    static bool CharShapeWidthIncrease(HwpWrapper* hwp);
+
+    // ParagraphShape (추가)
+    static bool ParagraphShapeAlignDistribute(HwpWrapper* hwp);
+    static bool ParagraphShapeAlignDivision(HwpWrapper* hwp);
+    static bool ParagraphShapeDecreaseLeftMargin(HwpWrapper* hwp);
+    static bool ParagraphShapeDecreaseLineSpacing(HwpWrapper* hwp);
+    static bool ParagraphShapeDecreaseMargin(HwpWrapper* hwp);
+    static bool ParagraphShapeDecreaseRightMargin(HwpWrapper* hwp);
+    static bool ParagraphShapeIncreaseLeftMargin(HwpWrapper* hwp);
+    static bool ParagraphShapeIncreaseLineSpacing(HwpWrapper* hwp);
+    static bool ParagraphShapeIncreaseMargin(HwpWrapper* hwp);
+    static bool ParagraphShapeIncreaseRightMargin(HwpWrapper* hwp);
+    static bool ParagraphShapeIndentAtCaret(HwpWrapper* hwp);
+    static bool ParagraphShapeIndentNegative(HwpWrapper* hwp);
+    static bool ParagraphShapeIndentPositive(HwpWrapper* hwp);
+    static bool ParagraphShapeProtect(HwpWrapper* hwp);
+    static bool ParagraphShapeSingleRow(HwpWrapper* hwp);
+    static bool ParagraphShapeWithNext(HwpWrapper* hwp);
+
+    // Move (추가)
+    static bool MoveLineDown(HwpWrapper* hwp);
+    static bool MoveLineUp(HwpWrapper* hwp);
+    static bool MoveNextWord(HwpWrapper* hwp);
+    static bool MovePrevWord(HwpWrapper* hwp);
+    static bool MoveNextChar(HwpWrapper* hwp);
+    static bool MovePrevChar(HwpWrapper* hwp);
+    static bool MovePageBegin(HwpWrapper* hwp);
+    static bool MovePageEnd(HwpWrapper* hwp);
+    static bool MoveSelDown(HwpWrapper* hwp);
+    static bool MoveSelLeft(HwpWrapper* hwp);
+    static bool MoveSelRight(HwpWrapper* hwp);
+    static bool MoveSelUp(HwpWrapper* hwp);
+    static bool MoveSelDocBegin(HwpWrapper* hwp);
+    static bool MoveSelDocEnd(HwpWrapper* hwp);
+    static bool MoveSelLineBegin(HwpWrapper* hwp);
+    static bool MoveSelLineEnd(HwpWrapper* hwp);
+    static bool MoveSelLineDown(HwpWrapper* hwp);
+    static bool MoveSelLineUp(HwpWrapper* hwp);
+    static bool MoveSelNextChar(HwpWrapper* hwp);
+    static bool MoveSelPrevChar(HwpWrapper* hwp);
+    static bool MoveSelNextWord(HwpWrapper* hwp);
+    static bool MoveSelPrevWord(HwpWrapper* hwp);
+    static bool MoveSelPageDown(HwpWrapper* hwp);
+    static bool MoveSelPageUp(HwpWrapper* hwp);
+    static bool MoveSelParaBegin(HwpWrapper* hwp);
+    static bool MoveSelParaEnd(HwpWrapper* hwp);
+    static bool MoveSelWordBegin(HwpWrapper* hwp);
+    static bool MoveSelWordEnd(HwpWrapper* hwp);
+    static bool MoveColumnBegin(HwpWrapper* hwp);
+    static bool MoveColumnEnd(HwpWrapper* hwp);
+    static bool MoveListBegin(HwpWrapper* hwp);
+    static bool MoveListEnd(HwpWrapper* hwp);
+    static bool MoveParentList(HwpWrapper* hwp);
+    static bool MoveRootList(HwpWrapper* hwp);
+    static bool MoveTopLevelBegin(HwpWrapper* hwp);
+    static bool MoveTopLevelEnd(HwpWrapper* hwp);
+    static bool MoveTopLevelList(HwpWrapper* hwp);
+    static bool MoveNextColumn(HwpWrapper* hwp);
+    static bool MovePrevColumn(HwpWrapper* hwp);
+    static bool MoveNextPos(HwpWrapper* hwp);
+    static bool MovePrevPos(HwpWrapper* hwp);
+    static bool MoveNextPosEx(HwpWrapper* hwp);
+    static bool MovePrevPosEx(HwpWrapper* hwp);
+    static bool MoveNextParaBegin(HwpWrapper* hwp);
+    static bool MovePrevParaBegin(HwpWrapper* hwp);
+    static bool MovePrevParaEnd(HwpWrapper* hwp);
+    static bool MoveSectionDown(HwpWrapper* hwp);
+    static bool MoveSectionUp(HwpWrapper* hwp);
+    static bool MoveScrollDown(HwpWrapper* hwp);
+    static bool MoveScrollUp(HwpWrapper* hwp);
+    static bool MoveScrollNext(HwpWrapper* hwp);
+    static bool MoveScrollPrev(HwpWrapper* hwp);
+    static bool MoveViewBegin(HwpWrapper* hwp);
+    static bool MoveViewEnd(HwpWrapper* hwp);
+    static bool MoveViewDown(HwpWrapper* hwp);
+    static bool MoveViewUp(HwpWrapper* hwp);
+
+    // Table (추가)
+    static bool TableLeftCell(HwpWrapper* hwp);
+    static bool TableRightCell(HwpWrapper* hwp);
+    static bool TableUpperCell(HwpWrapper* hwp);
+    static bool TableLowerCell(HwpWrapper* hwp);
+    static bool TableColPageDown(HwpWrapper* hwp);
+    static bool TableRightCellAppend(HwpWrapper* hwp);
+    static bool TableCellBlockCol(HwpWrapper* hwp);
+    static bool TableCellBlockRow(HwpWrapper* hwp);
+    static bool TableCellBlockExtend(HwpWrapper* hwp);
+    static bool TableCellAlignLeftTop(HwpWrapper* hwp);
+    static bool TableCellAlignCenterTop(HwpWrapper* hwp);
+    static bool TableCellAlignRightTop(HwpWrapper* hwp);
+    static bool TableCellAlignLeftCenter(HwpWrapper* hwp);
+    static bool TableCellAlignCenterCenter(HwpWrapper* hwp);
+    static bool TableCellAlignRightCenter(HwpWrapper* hwp);
+    static bool TableCellAlignLeftBottom(HwpWrapper* hwp);
+    static bool TableCellAlignCenterBottom(HwpWrapper* hwp);
+    static bool TableCellAlignRightBottom(HwpWrapper* hwp);
+    static bool TableVAlignTop(HwpWrapper* hwp);
+    static bool TableVAlignCenter(HwpWrapper* hwp);
+    static bool TableVAlignBottom(HwpWrapper* hwp);
+    static bool TableCellBorderAll(HwpWrapper* hwp);
+    static bool TableCellBorderNo(HwpWrapper* hwp);
+    static bool TableCellBorderOutside(HwpWrapper* hwp);
+    static bool TableCellBorderInside(HwpWrapper* hwp);
+    static bool TableCellBorderInsideHorz(HwpWrapper* hwp);
+    static bool TableCellBorderInsideVert(HwpWrapper* hwp);
+    static bool TableCellBorderTop(HwpWrapper* hwp);
+    static bool TableCellBorderBottom(HwpWrapper* hwp);
+    static bool TableCellBorderLeft(HwpWrapper* hwp);
+    static bool TableCellBorderRight(HwpWrapper* hwp);
+    static bool TableCellBorderDiagonalDown(HwpWrapper* hwp);
+    static bool TableCellBorderDiagonalUp(HwpWrapper* hwp);
+    static bool TableSubtractRow(HwpWrapper* hwp);
+    static bool TableDeleteCell(HwpWrapper* hwp);
+    static bool TableMergeTable(HwpWrapper* hwp);
+    static bool TableSplitTable(HwpWrapper* hwp);
+    static bool TableDistributeCellHeight(HwpWrapper* hwp);
+    static bool TableDistributeCellWidth(HwpWrapper* hwp);
+    static bool TableResizeDown(HwpWrapper* hwp);
+    static bool TableResizeUp(HwpWrapper* hwp);
+    static bool TableResizeLeft(HwpWrapper* hwp);
+    static bool TableResizeRight(HwpWrapper* hwp);
+    static bool TableResizeCellDown(HwpWrapper* hwp);
+    static bool TableResizeCellUp(HwpWrapper* hwp);
+    static bool TableResizeCellLeft(HwpWrapper* hwp);
+    static bool TableResizeCellRight(HwpWrapper* hwp);
+    static bool TableResizeExDown(HwpWrapper* hwp);
+    static bool TableResizeExUp(HwpWrapper* hwp);
+    static bool TableResizeExLeft(HwpWrapper* hwp);
+    static bool TableResizeExRight(HwpWrapper* hwp);
+    static bool TableResizeLineDown(HwpWrapper* hwp);
+    static bool TableResizeLineUp(HwpWrapper* hwp);
+    static bool TableResizeLineLeft(HwpWrapper* hwp);
+    static bool TableResizeLineRight(HwpWrapper* hwp);
+    static bool TableFormulaSumAuto(HwpWrapper* hwp);
+    static bool TableFormulaSumHor(HwpWrapper* hwp);
+    static bool TableFormulaSumVer(HwpWrapper* hwp);
+    static bool TableFormulaAvgAuto(HwpWrapper* hwp);
+    static bool TableFormulaAvgHor(HwpWrapper* hwp);
+    static bool TableFormulaAvgVer(HwpWrapper* hwp);
+    static bool TableFormulaProAuto(HwpWrapper* hwp);
+    static bool TableFormulaProHor(HwpWrapper* hwp);
+    static bool TableFormulaProVer(HwpWrapper* hwp);
+    static bool TableAutoFill(HwpWrapper* hwp);
+    static bool TableAutoFillDlg(HwpWrapper* hwp);
+    static bool TableDrawPen(HwpWrapper* hwp);
+    static bool TableDrawPenStyle(HwpWrapper* hwp);
+    static bool TableDrawPenWidth(HwpWrapper* hwp);
+    static bool TableEraser(HwpWrapper* hwp);
+    static bool TableDeleteComma(HwpWrapper* hwp);
+    static bool TableInsertComma(HwpWrapper* hwp);
+
+    // ShapeObj (추가)
+    static bool ShapeObjAlignLeft(HwpWrapper* hwp);
+    static bool ShapeObjAlignCenter(HwpWrapper* hwp);
+    static bool ShapeObjAlignRight(HwpWrapper* hwp);
+    static bool ShapeObjAlignTop(HwpWrapper* hwp);
+    static bool ShapeObjAlignMiddle(HwpWrapper* hwp);
+    static bool ShapeObjAlignBottom(HwpWrapper* hwp);
+    static bool ShapeObjAlignWidth(HwpWrapper* hwp);
+    static bool ShapeObjAlignHeight(HwpWrapper* hwp);
+    static bool ShapeObjAlignSize(HwpWrapper* hwp);
+    static bool ShapeObjAlignHorzSpacing(HwpWrapper* hwp);
+    static bool ShapeObjAlignVertSpacing(HwpWrapper* hwp);
+    static bool ShapeObjBringForward(HwpWrapper* hwp);
+    static bool ShapeObjSendBack(HwpWrapper* hwp);
+    static bool ShapeObjBringInFrontOfText(HwpWrapper* hwp);
+    static bool ShapeObjCtrlSendBehindText(HwpWrapper* hwp);
+    static bool ShapeObjHorzFlip(HwpWrapper* hwp);
+    static bool ShapeObjVertFlip(HwpWrapper* hwp);
+    static bool ShapeObjHorzFlipOrgState(HwpWrapper* hwp);
+    static bool ShapeObjVertFlipOrgState(HwpWrapper* hwp);
+    static bool ShapeObjRotater(HwpWrapper* hwp);
+    static bool ShapeObjRightAngleRotater(HwpWrapper* hwp);
+    static bool ShapeObjRightAngleRotaterAnticlockwise(HwpWrapper* hwp);
+    static bool ShapeObjMoveUp(HwpWrapper* hwp);
+    static bool ShapeObjMoveDown(HwpWrapper* hwp);
+    static bool ShapeObjMoveLeft(HwpWrapper* hwp);
+    static bool ShapeObjMoveRight(HwpWrapper* hwp);
+    static bool ShapeObjResizeUp(HwpWrapper* hwp);
+    static bool ShapeObjResizeDown(HwpWrapper* hwp);
+    static bool ShapeObjResizeLeft(HwpWrapper* hwp);
+    static bool ShapeObjResizeRight(HwpWrapper* hwp);
+    static bool ShapeObjGroup(HwpWrapper* hwp);
+    static bool ShapeObjUngroup(HwpWrapper* hwp);
+    static bool ShapeObjNextObject(HwpWrapper* hwp);
+    static bool ShapeObjPrevObject(HwpWrapper* hwp);
+    static bool ShapeObjLock(HwpWrapper* hwp);
+    static bool ShapeObjUnlockAll(HwpWrapper* hwp);
+    static bool ShapeObjAttachCaption(HwpWrapper* hwp);
+    static bool ShapeObjDetachCaption(HwpWrapper* hwp);
+    static bool ShapeObjInsertCaptionNum(HwpWrapper* hwp);
+    static bool ShapeObjAttachTextBox(HwpWrapper* hwp);
+    static bool ShapeObjDetachTextBox(HwpWrapper* hwp);
+    static bool ShapeObjToggleTextBox(HwpWrapper* hwp);
+    static bool ShapeObjTextBoxEdit(HwpWrapper* hwp);
+    static bool ShapeObjTableSelCell(HwpWrapper* hwp);
+    static bool ShapeObjFillProperty(HwpWrapper* hwp);
+    static bool ShapeObjLineProperty(HwpWrapper* hwp);
+    static bool ShapeObjLineStyleOther(HwpWrapper* hwp);
+    static bool ShapeObjLineWidthOther(HwpWrapper* hwp);
+    static bool ShapeObjNorm(HwpWrapper* hwp);
+    static bool ShapeObjGuideLine(HwpWrapper* hwp);
+    static bool ShapeObjShowGuideLine(HwpWrapper* hwp);
+    static bool ShapeObjShowGuideLineBase(HwpWrapper* hwp);
+    static bool ShapeObjWrapSquare(HwpWrapper* hwp);
+    static bool ShapeObjWrapTopAndBottom(HwpWrapper* hwp);
+    static bool ShapeObjSaveAsPicture(HwpWrapper* hwp);
+
+    // File (추가)
+    static bool FileNew(HwpWrapper* hwp);
+    static bool FileNewTab(HwpWrapper* hwp);
+    static bool FileOpen(HwpWrapper* hwp);
+    static bool FileOpenMRU(HwpWrapper* hwp);
+    static bool FileSave(HwpWrapper* hwp);
+    static bool FileSaveAs(HwpWrapper* hwp);
+    static bool FileSaveAsDRM(HwpWrapper* hwp);
+    static bool FileSaveOptionDlg(HwpWrapper* hwp);
+    static bool FileFind(HwpWrapper* hwp);
+    static bool FilePreview(HwpWrapper* hwp);
+    static bool FileNextVersionDiff(HwpWrapper* hwp);
+    static bool FilePrevVersionDiff(HwpWrapper* hwp);
+    static bool FileVersionDiffChangeAlign(HwpWrapper* hwp);
+    static bool FileVersionDiffSameAlign(HwpWrapper* hwp);
+    static bool FileVersionDiffSyncScroll(HwpWrapper* hwp);
+
+    // Insert
+    static bool InsertAutoNum(HwpWrapper* hwp);
+    static bool InsertCpNo(HwpWrapper* hwp);
+    static bool InsertCpTpNo(HwpWrapper* hwp);
+    static bool InsertTpNo(HwpWrapper* hwp);
+    static bool InsertPageNum(HwpWrapper* hwp);
+    static bool InsertDateCode(HwpWrapper* hwp);
+    static bool InsertDocInfo(HwpWrapper* hwp);
+    static bool InsertEndnote(HwpWrapper* hwp);
+    static bool InsertFootnote(HwpWrapper* hwp);
+    static bool InsertFieldCitation(HwpWrapper* hwp);
+    static bool InsertFieldDateTime(HwpWrapper* hwp);
+    static bool InsertFieldMemo(HwpWrapper* hwp);
+    static bool InsertFieldRevisionChagne(HwpWrapper* hwp);
+    static bool InsertFixedWidthSpace(HwpWrapper* hwp);
+    static bool InsertNonBreakingSpace(HwpWrapper* hwp);
+    static bool InsertSoftHyphen(HwpWrapper* hwp);
+    static bool InsertSpace(HwpWrapper* hwp);
+    static bool InsertTab(HwpWrapper* hwp);
+    static bool InsertLine(HwpWrapper* hwp);
+    static bool InsertStringDateTime(HwpWrapper* hwp);
+    static bool InsertLastPrintDate(HwpWrapper* hwp);
+    static bool InsertLastSaveBy(HwpWrapper* hwp);
+    static bool InsertLastSaveDate(HwpWrapper* hwp);
+
+    // Delete (추가)
+    static bool DeleteLine(HwpWrapper* hwp);
+    static bool DeleteLineEnd(HwpWrapper* hwp);
+    static bool DeleteWord(HwpWrapper* hwp);
+    static bool DeleteWordBack(HwpWrapper* hwp);
+    static bool DeleteField(HwpWrapper* hwp);
+    static bool DeleteFieldMemo(HwpWrapper* hwp);
+    static bool DeletePage(HwpWrapper* hwp);
+    static bool DeletePrivateInfoMark(HwpWrapper* hwp);
+    static bool DeletePrivateInfoMarkAtCurrentPos(HwpWrapper* hwp);
+    static bool DeleteDocumentMasterPage(HwpWrapper* hwp);
+    static bool DeleteSectionMasterPage(HwpWrapper* hwp);
+
+    // Clipboard (추가)
+    static bool PasteSpecial(HwpWrapper* hwp);
+    static bool CopyPage(HwpWrapper* hwp);
+    static bool PastePage(HwpWrapper* hwp);
+    static bool Erase(HwpWrapper* hwp);
+
+    // Select (추가)
+    static bool Select(HwpWrapper* hwp);
+    static bool SelectColumn(HwpWrapper* hwp);
+    static bool SelectCtrlFront(HwpWrapper* hwp);
+    static bool SelectCtrlReverse(HwpWrapper* hwp);
+    static bool UnSelectCtrl(HwpWrapper* hwp);
+
+    // 기타 핵심 액션
+    static bool Close(HwpWrapper* hwp);
+    static bool CloseEx(HwpWrapper* hwp);
+    static bool ToggleOverwrite(HwpWrapper* hwp);
+    static bool ReturnPrevPos(HwpWrapper* hwp);
+    static bool RecalcPageCount(HwpWrapper* hwp);
+    static bool SpellingCheck(HwpWrapper* hwp);
+    static bool EasyFind(HwpWrapper* hwp);
+
+    // TrackChange
+    static bool TrackChangeApply(HwpWrapper* hwp);
+    static bool TrackChangeApplyAll(HwpWrapper* hwp);
+    static bool TrackChangeApplyNext(HwpWrapper* hwp);
+    static bool TrackChangeApplyPrev(HwpWrapper* hwp);
+    static bool TrackChangeApplyViewAll(HwpWrapper* hwp);
+    static bool TrackChangeCancel(HwpWrapper* hwp);
+    static bool TrackChangeCancelAll(HwpWrapper* hwp);
+    static bool TrackChangeCancelNext(HwpWrapper* hwp);
+    static bool TrackChangeCancelPrev(HwpWrapper* hwp);
+    static bool TrackChangeCancelViewAll(HwpWrapper* hwp);
+    static bool TrackChangeNext(HwpWrapper* hwp);
+    static bool TrackChangePrev(HwpWrapper* hwp);
+    static bool TrackChangeAuthor(HwpWrapper* hwp);
+
+    // ViewOption
+    static bool ViewOptionCtrlMark(HwpWrapper* hwp);
+    static bool ViewOptionGuideLine(HwpWrapper* hwp);
+    static bool ViewOptionMemo(HwpWrapper* hwp);
+    static bool ViewOptionPaper(HwpWrapper* hwp);
+    static bool ViewOptionParaMark(HwpWrapper* hwp);
+    static bool ViewOptionPicture(HwpWrapper* hwp);
+    static bool ViewZoomFitPage(HwpWrapper* hwp);
+    static bool ViewZoomFitWidth(HwpWrapper* hwp);
+    static bool ViewTabButton(HwpWrapper* hwp);
+
+    // HeaderFooter
+    static bool HeaderFooterDelete(HwpWrapper* hwp);
+    static bool HeaderFooterModify(HwpWrapper* hwp);
+    static bool HeaderFooterToNext(HwpWrapper* hwp);
+    static bool HeaderFooterToPrev(HwpWrapper* hwp);
+
+    // Note/Memo
+    static bool NoteDelete(HwpWrapper* hwp);
+    static bool NoteModify(HwpWrapper* hwp);
+    static bool NoteToNext(HwpWrapper* hwp);
+    static bool NoteToPrev(HwpWrapper* hwp);
+    static bool MemoToNext(HwpWrapper* hwp);
+    static bool MemoToPrev(HwpWrapper* hwp);
+    static bool Comment(HwpWrapper* hwp);
+    static bool CommentDelete(HwpWrapper* hwp);
+    static bool CommentModify(HwpWrapper* hwp);
+    static bool ReplyMemo(HwpWrapper* hwp);
+
+    // MasterPage
+    static bool MasterPage(HwpWrapper* hwp);
+    static bool MasterPageDuplicate(HwpWrapper* hwp);
+    static bool MasterPageExcept(HwpWrapper* hwp);
+    static bool MasterPageFront(HwpWrapper* hwp);
+    static bool MasterPageToNext(HwpWrapper* hwp);
+    static bool MasterPageToPrevious(HwpWrapper* hwp);
+
+    // Picture
+    static bool PictureInsertDialog(HwpWrapper* hwp);
+    static bool PictureLinkedToEmbedded(HwpWrapper* hwp);
+    static bool PictureSave(HwpWrapper* hwp);
+    static bool PictureScissor(HwpWrapper* hwp);
+    static bool PictureToOriginal(HwpWrapper* hwp);
+
+    // Window/Frame
+    static bool FrameFullScreen(HwpWrapper* hwp);
+    static bool FrameFullScreenEnd(HwpWrapper* hwp);
+    static bool FrameHRuler(HwpWrapper* hwp);
+    static bool FrameVRuler(HwpWrapper* hwp);
+    static bool FrameStatusBar(HwpWrapper* hwp);
+    static bool WindowAlignCascade(HwpWrapper* hwp);
+    static bool WindowAlignTileHorz(HwpWrapper* hwp);
+    static bool WindowAlignTileVert(HwpWrapper* hwp);
+    static bool WindowList(HwpWrapper* hwp);
+    static bool WindowMinimizeAll(HwpWrapper* hwp);
+    static bool WindowNextPane(HwpWrapper* hwp);
+    static bool WindowNextTab(HwpWrapper* hwp);
+    static bool WindowPrevTab(HwpWrapper* hwp);
+    static bool SplitAll(HwpWrapper* hwp);
+    static bool SplitHorz(HwpWrapper* hwp);
+    static bool SplitVert(HwpWrapper* hwp);
+    static bool NoSplit(HwpWrapper* hwp);
+
+    // Input
+    static bool InputCodeChange(HwpWrapper* hwp);
+    static bool InputHanja(HwpWrapper* hwp);
+    static bool InputHanjaBusu(HwpWrapper* hwp);
+    static bool InputHanjaMean(HwpWrapper* hwp);
+
+    // FormObj
+    static bool FormDesignMode(HwpWrapper* hwp);
+    static bool FormObjCreatorCheckButton(HwpWrapper* hwp);
+    static bool FormObjCreatorComboBox(HwpWrapper* hwp);
+    static bool FormObjCreatorEdit(HwpWrapper* hwp);
+    static bool FormObjCreatorListBox(HwpWrapper* hwp);
+    static bool FormObjCreatorPushButton(HwpWrapper* hwp);
+    static bool FormObjCreatorRadioButton(HwpWrapper* hwp);
+
+    // Auto
+    static bool ASendBrowserText(HwpWrapper* hwp);
+    static bool AutoChangeHangul(HwpWrapper* hwp);
+    static bool AutoChangeRun(HwpWrapper* hwp);
+    static bool AutoSpellRun(HwpWrapper* hwp);
+
+    // DrawObj
+    static bool DrawObjCancelOneStep(HwpWrapper* hwp);
+    static bool DrawObjEditDetail(HwpWrapper* hwp);
+    static bool DrawObjOpenClosePolygon(HwpWrapper* hwp);
+    static bool DrawObjTemplateSave(HwpWrapper* hwp);
+
+    // Quick
+    static bool QuickCommandRun(HwpWrapper* hwp);
+    static bool QuickCorrect(HwpWrapper* hwp);
+    static bool QuickCorrectRun(HwpWrapper* hwp);
+
+    // Macro
+    static bool MacroPause(HwpWrapper* hwp);
+    static bool MacroRepeat(HwpWrapper* hwp);
+    static bool MacroStop(HwpWrapper* hwp);
+
+    // Misc
+    static bool MailMergeField(HwpWrapper* hwp);
+    static bool MakeIndex(HwpWrapper* hwp);
+    static bool LabelAdd(HwpWrapper* hwp);
+    static bool LabelTemplate(HwpWrapper* hwp);
+    static bool HanThDIC(HwpWrapper* hwp);
+    static bool HwpDic(HwpWrapper* hwp);
+    static bool ReturnKeyInField(HwpWrapper* hwp);
 };
 
 } // namespace cpyhwpx

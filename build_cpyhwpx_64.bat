@@ -21,7 +21,7 @@ set PYTHON_INC=C:\Users\leep0\AppData\Local\Programs\Python\Python312\include
 set PYTHON_LIB=C:\Users\leep0\AppData\Local\Programs\Python\Python312\libs
 
 REM Source files
-set SOURCES=src\HwpWrapper.cpp src\HwpCtrl.cpp src\HwpAction.cpp src\HwpParameter.cpp src\Utils.cpp src\FontDefs.cpp src\bindings.cpp
+set SOURCES=src\HwpWrapper.cpp src\HwpCtrl.cpp src\HwpAction.cpp src\HwpParameter.cpp src\XHwpDocument.cpp src\XHwpDocuments.cpp src\Utils.cpp src\FontDefs.cpp src\bindings.cpp
 
 REM Compile options
 set CL_OPTS=/EHsc /O2 /MD /std:c++17 /utf-8 /W3

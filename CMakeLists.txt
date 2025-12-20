@@ -54,6 +54,8 @@ set(CPYHWPX_SOURCES
     src/HwpCtrl.cpp
     src/HwpAction.cpp
     src/HwpParameter.cpp
+    src/XHwpDocument.cpp
+    src/XHwpDocuments.cpp
     src/Utils.cpp
     src/FontDefs.cpp
     src/bindings.cpp
@@ -65,6 +67,8 @@ set(CPYHWPX_HEADERS
     src/HwpCtrl.h
     src/HwpAction.h
     src/HwpParameter.h
+    src/XHwpDocument.h
+    src/XHwpDocuments.h
     src/Utils.h
     src/FontDefs.h
 )

@@ -6,9 +6,13 @@
  */
 
 #include "HwpWrapper.h"
+#include "HwpCtrl.h"
 #include <stdexcept>
 #include <atlbase.h>
 #include <atlcom.h>
+#include <shlwapi.h>
+
+#pragma comment(lib, "shlwapi.lib")
 
 namespace cpyhwpx {
 
@@ -43,13 +47,14 @@ DISPID DISPIDCache::GetOrLoad(IDispatch* pObj, const std::wstring& name)
 // 생성자/소멸자
 //=============================================================================
 
-HwpWrapper::HwpWrapper(bool visible, bool new_instance)
+HwpWrapper::HwpWrapper(bool visible, bool new_instance, bool register_module)
     : m_pHwp(nullptr)
     , m_pHParameterSet(nullptr)
     , m_pHAction(nullptr)
     , m_bInitialized(false)
     , m_bVisible(visible)
     , m_bNewInstance(new_instance)
+    , m_bRegisterModule(register_module)
 {
 }
 
@@ -115,6 +120,17 @@ bool HwpWrapper::Initialize()
     SetVisible(m_bVisible);
 
     m_bInitialized = true;
+
+    // 보안 모듈 자동 등록 (pyhwpx 방식)
+    if (m_bRegisterModule) {
+        try {
+            AutoRegisterModule();
+        } catch (...) {
+            // 등록 실패해도 계속 진행 (pyhwpx와 동일)
+            // 사용자가 수동으로 등록할 수 있음
+        }
+    }
+
     return true;
 }
 
@@ -149,6 +165,120 @@ bool HwpWrapper::RegisterModule(const std::wstring& module_type,
 
     if (FAILED(hr)) return false;
     return (result.vt == VT_BOOL) ? (result.boolVal != VARIANT_FALSE) : true;
+}
+
+//=============================================================================
+// 보안 모듈 관리
+//=============================================================================
+
+bool HwpWrapper::CheckRegistryKey(const std::wstring& key_name)
+{
+    HKEY hKey;
+    std::wstring subKey = L"Software\\HNC\\HwpAutomation\\Modules";
+
+    // 첫 번째 경로 시도
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, subKey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+        // 대체 경로 시도
+        subKey = L"Software\\Hnc\\HwpUserAction\\Modules";
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, subKey.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+            return false;
+        }
+    }
+
+    wchar_t buffer[MAX_PATH];
+    DWORD bufferSize = sizeof(buffer);
+    DWORD type;
+
+    LONG result = RegQueryValueExW(hKey, key_name.c_str(), NULL, &type,
+                                    (LPBYTE)buffer, &bufferSize);
+    RegCloseKey(hKey);
+
+    if (result != ERROR_SUCCESS || type != REG_SZ) {
+        return false;
+    }
+
+    // DLL 파일 존재 확인
+    return PathFileExistsW(buffer) == TRUE;
+}
+
+std::wstring HwpWrapper::FindDllPath()
+{
+    wchar_t modulePath[MAX_PATH];
+
+    // 1. 현재 모듈(cpyhwpx.pyd) 경로에서 검색
+    HMODULE hModule = NULL;
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                       (LPCWSTR)&HwpWrapper::FindDllPath, &hModule);
+    GetModuleFileNameW(hModule, modulePath, MAX_PATH);
+
+    std::wstring basePath(modulePath);
+    size_t pos = basePath.find_last_of(L"\\/");
+    if (pos != std::wstring::npos) {
+        basePath = basePath.substr(0, pos + 1);
+    }
+
+    // 같은 폴더에서 검색 (_native 폴더)
+    std::wstring dllPath = basePath + L"FilePathCheckerModule.dll";
+    if (PathFileExistsW(dllPath.c_str())) {
+        return dllPath;
+    }
+
+    // 2. 상위 폴더/cpyhwpx/_native 검색
+    pos = basePath.find_last_of(L"\\/", basePath.length() - 2);
+    if (pos != std::wstring::npos) {
+        std::wstring parentPath = basePath.substr(0, pos + 1);
+        dllPath = parentPath + L"cpyhwpx\\_native\\FilePathCheckerModule.dll";
+        if (PathFileExistsW(dllPath.c_str())) {
+            return dllPath;
+        }
+    }
+
+    return L"";
+}
+
+bool HwpWrapper::RegisterToRegistry(const std::wstring& dll_path,
+                                     const std::wstring& key_name)
+{
+    std::wstring actualPath = dll_path.empty() ? FindDllPath() : dll_path;
+    if (actualPath.empty()) {
+        return false;
+    }
+
+    HKEY hKey;
+    std::wstring subKey = L"Software\\HNC\\HwpAutomation\\Modules";
+
+    // 키 열기/생성
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL,
+                        REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS) {
+        // 대체 경로 시도
+        subKey = L"Software\\Hnc\\HwpUserAction\\Modules";
+        if (RegCreateKeyExW(HKEY_CURRENT_USER, subKey.c_str(), 0, NULL,
+                            REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS) {
+            return false;
+        }
+    }
+
+    LONG result = RegSetValueExW(hKey, key_name.c_str(), 0, REG_SZ,
+                                  (const BYTE*)actualPath.c_str(),
+                                  (DWORD)((actualPath.length() + 1) * sizeof(wchar_t)));
+    RegCloseKey(hKey);
+
+    return result == ERROR_SUCCESS;
+}
+
+bool HwpWrapper::AutoRegisterModule(const std::wstring& module_type,
+                                     const std::wstring& module_data)
+{
+    // 1. 레지스트리 확인
+    if (!CheckRegistryKey(module_data)) {
+        // 2. 미등록이면 등록
+        if (!RegisterToRegistry(L"", module_data)) {
+            return false;
+        }
+    }
+
+    // 3. COM API 호출
+    return RegisterModule(module_type, module_data);
 }
 
 void HwpWrapper::Quit(bool save)
@@ -601,6 +731,552 @@ bool HwpWrapper::InsertFile(const std::wstring& filename,
     return success;
 }
 
+std::wstring HwpWrapper::GetTextFile(const std::wstring& format,
+                                      const std::wstring& option)
+{
+    if (!m_pHwp) return L"";
+
+    // COM 이름 지정 파라미터 호출:
+    // hwp.GetTextFile(Format=format, option=option)
+
+    HRESULT hr;
+    DISPID dispid;
+
+    // 1. GetTextFile 메서드의 DISPID 획득
+    OLECHAR* methodName = const_cast<OLECHAR*>(L"Gettextfile");
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, &methodName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return L"";
+
+    // 2. 이름 지정 파라미터의 DISPID 획득
+    OLECHAR* paramNames[2] = {
+        const_cast<OLECHAR*>(L"Format"),
+        const_cast<OLECHAR*>(L"option")
+    };
+    DISPID namedDispids[2];
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, paramNames, 2, LOCALE_USER_DEFAULT, namedDispids);
+    if (FAILED(hr)) {
+        // 이름 지정 파라미터 실패 시 위치 기반으로 시도
+        VARIANT args[2];
+        VariantInit(&args[0]);
+        VariantInit(&args[1]);
+
+        // 인자는 역순 (option, format)
+        args[0].vt = VT_BSTR;
+        args[0].bstrVal = SysAllocString(option.c_str());
+        args[1].vt = VT_BSTR;
+        args[1].bstrVal = SysAllocString(format.c_str());
+
+        DISPPARAMS params = { args, NULL, 2, 0 };
+        VARIANT result;
+        VariantInit(&result);
+
+        hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                            &params, &result, NULL, NULL);
+
+        SysFreeString(args[0].bstrVal);
+        SysFreeString(args[1].bstrVal);
+
+        if (FAILED(hr)) return L"";
+
+        std::wstring text;
+        if (result.vt == VT_BSTR && result.bstrVal) {
+            text = result.bstrVal;
+            SysFreeString(result.bstrVal);
+        }
+        return text;
+    }
+
+    // 3. 이름 지정 파라미터로 호출
+    VARIANT args[2];
+    VariantInit(&args[0]);
+    VariantInit(&args[1]);
+
+    // 이름 지정 시 순서는 namedDispids 순서와 일치해야 함
+    args[0].vt = VT_BSTR;
+    args[0].bstrVal = SysAllocString(format.c_str());
+    args[1].vt = VT_BSTR;
+    args[1].bstrVal = SysAllocString(option.c_str());
+
+    DISPPARAMS params = { args, namedDispids, 2, 2 };
+    VARIANT result;
+    VariantInit(&result);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
+
+    SysFreeString(args[0].bstrVal);
+    SysFreeString(args[1].bstrVal);
+
+    if (FAILED(hr)) return L"";
+
+    std::wstring text;
+    if (result.vt == VT_BSTR && result.bstrVal) {
+        text = result.bstrVal;
+        SysFreeString(result.bstrVal);
+    }
+    return text;
+}
+
+int HwpWrapper::SetTextFile(const std::wstring& data,
+                             const std::wstring& format,
+                             const std::wstring& option)
+{
+    if (!m_pHwp) return 0;
+
+    // COM 이름 지정 파라미터 호출:
+    // hwp.SetTextFile(data=data, Format=format, option=option)
+
+    HRESULT hr;
+    DISPID dispid;
+
+    // 1. SetTextFile 메서드의 DISPID 획득
+    OLECHAR* methodName = const_cast<OLECHAR*>(L"SetTextFile");
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, &methodName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return 0;
+
+    // 2. 위치 기반 파라미터로 호출 (data, Format, option 순서)
+    VARIANT args[3];
+    VariantInit(&args[0]);
+    VariantInit(&args[1]);
+    VariantInit(&args[2]);
+
+    // 인자는 역순 (option, Format, data)
+    args[0].vt = VT_BSTR;
+    args[0].bstrVal = SysAllocString(option.c_str());
+    args[1].vt = VT_BSTR;
+    args[1].bstrVal = SysAllocString(format.c_str());
+    args[2].vt = VT_BSTR;
+    args[2].bstrVal = SysAllocString(data.c_str());
+
+    DISPPARAMS params = { args, NULL, 3, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
+
+    SysFreeString(args[0].bstrVal);
+    SysFreeString(args[1].bstrVal);
+    SysFreeString(args[2].bstrVal);
+
+    if (FAILED(hr)) return 0;
+
+    // 반환값 처리 (성공=1, 실패=0)
+    if (result.vt == VT_I4) return result.lVal;
+    if (result.vt == VT_BOOL) return result.boolVal != VARIANT_FALSE ? 1 : 0;
+    return 1;  // 성공으로 간주
+}
+
+bool HwpWrapper::OpenPdf(const std::wstring& pdfPath, int thisWindow)
+{
+    if (!m_pHwp) return false;
+
+    HRESULT hr;
+    DISPID dispid;
+    VARIANT result;
+    VariantInit(&result);
+
+    // 1. HParameterSet 속성 가져오기
+    OLECHAR* psetName = const_cast<OLECHAR*>(L"HParameterSet");
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, &psetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                        &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHParameterSet = result.pdispVal;
+
+    // 2. HFileOpenSave 속성 가져오기
+    OLECHAR* fileOpenSaveName = const_cast<OLECHAR*>(L"HFileOpenSave");
+    hr = pHParameterSet->GetIDsOfNames(IID_NULL, &fileOpenSaveName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHParameterSet->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHParameterSet->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    pHParameterSet->Release();
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHFileOpenSave = result.pdispVal;
+
+    // 3. HSet 속성 가져오기
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pHFileOpenSave->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHFileOpenSave->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHFileOpenSave->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) {
+        pHFileOpenSave->Release();
+        return false;
+    }
+
+    IDispatch* pHSet = result.pdispVal;
+
+    // 4. HAction 가져오기
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pHSet->Release();
+        pHFileOpenSave->Release();
+        return false;
+    }
+
+    // 5. CallPDFConverter 먼저 실행
+    OLECHAR* runName = const_cast<OLECHAR*>(L"Run");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &runName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT runArgs[2];
+        VariantInit(&runArgs[0]);
+        VariantInit(&runArgs[1]);
+        runArgs[0].vt = VT_BSTR;
+        runArgs[0].bstrVal = SysAllocString(L"");
+        runArgs[1].vt = VT_BSTR;
+        runArgs[1].bstrVal = SysAllocString(L"CallPDFConverter");
+
+        DISPPARAMS runParams = { runArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &runParams, &result, NULL, NULL);
+        SysFreeString(runArgs[0].bstrVal);
+        SysFreeString(runArgs[1].bstrVal);
+        VariantClear(&result);
+    }
+
+    // 6. HAction.GetDefault("FileOpenPDF", HSet) 호출
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT getDefaultArgs[2];
+        VariantInit(&getDefaultArgs[0]);
+        VariantInit(&getDefaultArgs[1]);
+        getDefaultArgs[0].vt = VT_DISPATCH;
+        getDefaultArgs[0].pdispVal = pHSet;
+        getDefaultArgs[1].vt = VT_BSTR;
+        getDefaultArgs[1].bstrVal = SysAllocString(L"FileOpenPDF");
+
+        DISPPARAMS getDefaultParams = { getDefaultArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &getDefaultParams, &result, NULL, NULL);
+        SysFreeString(getDefaultArgs[1].bstrVal);
+        VariantClear(&result);
+    }
+
+    // 7. filename 속성 설정
+    OLECHAR* filenamePropName = const_cast<OLECHAR*>(L"filename");
+    hr = pHFileOpenSave->GetIDsOfNames(IID_NULL, &filenamePropName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT filenameVal;
+        VariantInit(&filenameVal);
+        filenameVal.vt = VT_BSTR;
+        filenameVal.bstrVal = SysAllocString(pdfPath.c_str());
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS filenameParams = { &filenameVal, &putid, 1, 1 };
+        pHFileOpenSave->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                                &filenameParams, NULL, NULL, NULL);
+        SysFreeString(filenameVal.bstrVal);
+    }
+
+    // 8. OpenFlag 속성 설정
+    OLECHAR* openFlagName = const_cast<OLECHAR*>(L"OpenFlag");
+    hr = pHFileOpenSave->GetIDsOfNames(IID_NULL, &openFlagName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT flagVal;
+        VariantInit(&flagVal);
+        flagVal.vt = VT_I4;
+        flagVal.lVal = thisWindow;
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS flagParams = { &flagVal, &putid, 1, 1 };
+        pHFileOpenSave->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                                &flagParams, NULL, NULL, NULL);
+    }
+
+    // 9. HAction.Execute("FileOpenPDF", HSet) 호출
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    bool success = false;
+    if (SUCCEEDED(hr)) {
+        VARIANT executeArgs[2];
+        VariantInit(&executeArgs[0]);
+        VariantInit(&executeArgs[1]);
+        executeArgs[0].vt = VT_DISPATCH;
+        executeArgs[0].pdispVal = pHSet;
+        executeArgs[1].vt = VT_BSTR;
+        executeArgs[1].bstrVal = SysAllocString(L"FileOpenPDF");
+
+        DISPPARAMS executeParams = { executeArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        hr = pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                              &executeParams, &result, NULL, NULL);
+        SysFreeString(executeArgs[1].bstrVal);
+
+        if (SUCCEEDED(hr) && result.vt == VT_BOOL) {
+            success = (result.boolVal != VARIANT_FALSE);
+        }
+        VariantClear(&result);
+    }
+
+    pHSet->Release();
+    pHFileOpenSave->Release();
+    pHAction->Release();
+    return success;
+}
+
+bool HwpWrapper::SaveBlockAs(const std::wstring& path,
+                              const std::wstring& format,
+                              int attributes)
+{
+    if (!m_pHwp) return false;
+
+    // 선택 모드 확인
+    VARIANT selModeVar = GetProperty(L"SelectionMode");
+    if (selModeVar.vt == VT_I4 && selModeVar.lVal == 0) {
+        return false;  // 선택된 블록 없음
+    }
+
+    HRESULT hr;
+    DISPID dispid;
+    VARIANT result;
+    VariantInit(&result);
+
+    // 1. HParameterSet 속성 가져오기
+    OLECHAR* psetName = const_cast<OLECHAR*>(L"HParameterSet");
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, &psetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                        &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHParameterSet = result.pdispVal;
+
+    // 2. HFileOpenSave 속성 가져오기
+    OLECHAR* fileOpenSaveName = const_cast<OLECHAR*>(L"HFileOpenSave");
+    hr = pHParameterSet->GetIDsOfNames(IID_NULL, &fileOpenSaveName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHParameterSet->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHParameterSet->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    pHParameterSet->Release();
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHFileOpenSave = result.pdispVal;
+
+    // 3. HSet 속성 가져오기
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pHFileOpenSave->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHFileOpenSave->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHFileOpenSave->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) {
+        pHFileOpenSave->Release();
+        return false;
+    }
+
+    IDispatch* pHSet = result.pdispVal;
+
+    // 4. HAction 가져오기
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pHSet->Release();
+        pHFileOpenSave->Release();
+        return false;
+    }
+
+    // 5. HAction.GetDefault("FileSaveBlock_S", HSet) 호출
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT getDefaultArgs[2];
+        VariantInit(&getDefaultArgs[0]);
+        VariantInit(&getDefaultArgs[1]);
+        getDefaultArgs[0].vt = VT_DISPATCH;
+        getDefaultArgs[0].pdispVal = pHSet;
+        getDefaultArgs[1].vt = VT_BSTR;
+        getDefaultArgs[1].bstrVal = SysAllocString(L"FileSaveBlock_S");
+
+        DISPPARAMS getDefaultParams = { getDefaultArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &getDefaultParams, &result, NULL, NULL);
+        SysFreeString(getDefaultArgs[1].bstrVal);
+        VariantClear(&result);
+    }
+
+    // 6. filename 속성 설정
+    OLECHAR* filenamePropName = const_cast<OLECHAR*>(L"filename");
+    hr = pHFileOpenSave->GetIDsOfNames(IID_NULL, &filenamePropName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT filenameVal;
+        VariantInit(&filenameVal);
+        filenameVal.vt = VT_BSTR;
+        filenameVal.bstrVal = SysAllocString(path.c_str());
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS filenameParams = { &filenameVal, &putid, 1, 1 };
+        pHFileOpenSave->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                                &filenameParams, NULL, NULL, NULL);
+        SysFreeString(filenameVal.bstrVal);
+    }
+
+    // 7. Format 속성 설정
+    OLECHAR* formatPropName = const_cast<OLECHAR*>(L"Format");
+    hr = pHFileOpenSave->GetIDsOfNames(IID_NULL, &formatPropName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT formatVal;
+        VariantInit(&formatVal);
+        formatVal.vt = VT_BSTR;
+        formatVal.bstrVal = SysAllocString(format.c_str());
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS formatParams = { &formatVal, &putid, 1, 1 };
+        pHFileOpenSave->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                                &formatParams, NULL, NULL, NULL);
+        SysFreeString(formatVal.bstrVal);
+    }
+
+    // 8. Attributes 속성 설정
+    OLECHAR* attrPropName = const_cast<OLECHAR*>(L"Attributes");
+    hr = pHFileOpenSave->GetIDsOfNames(IID_NULL, &attrPropName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT attrVal;
+        VariantInit(&attrVal);
+        attrVal.vt = VT_I4;
+        attrVal.lVal = attributes;
+
+        DISPID putid = DISPID_PROPERTYPUT;
+        DISPPARAMS attrParams = { &attrVal, &putid, 1, 1 };
+        pHFileOpenSave->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                                &attrParams, NULL, NULL, NULL);
+    }
+
+    // 9. HAction.Execute("FileSaveBlock_S", HSet) 호출
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    bool success = false;
+    if (SUCCEEDED(hr)) {
+        VARIANT executeArgs[2];
+        VariantInit(&executeArgs[0]);
+        VariantInit(&executeArgs[1]);
+        executeArgs[0].vt = VT_DISPATCH;
+        executeArgs[0].pdispVal = pHSet;
+        executeArgs[1].vt = VT_BSTR;
+        executeArgs[1].bstrVal = SysAllocString(L"FileSaveBlock_S");
+
+        DISPPARAMS executeParams = { executeArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        hr = pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                              &executeParams, &result, NULL, NULL);
+        SysFreeString(executeArgs[1].bstrVal);
+
+        if (SUCCEEDED(hr) && result.vt == VT_BOOL) {
+            success = (result.boolVal != VARIANT_FALSE);
+        }
+        VariantClear(&result);
+    }
+
+    pHSet->Release();
+    pHFileOpenSave->Release();
+    pHAction->Release();
+    return success;
+}
+
+std::map<std::wstring, std::wstring> HwpWrapper::GetFileInfo(const std::wstring& filename)
+{
+    std::map<std::wstring, std::wstring> result;
+    if (!m_pHwp) return result;
+
+    DISPID dispid;
+    OLECHAR* name = const_cast<OLECHAR*>(L"GetFileInfo");
+    HRESULT hr = m_pHwp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return result;
+
+    VARIANT arg;
+    VariantInit(&arg);
+    arg.vt = VT_BSTR;
+    arg.bstrVal = SysAllocString(filename.c_str());
+
+    DISPPARAMS params = { &arg, NULL, 1, 0 };
+    VARIANT retVal;
+    VariantInit(&retVal);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &retVal, NULL, NULL);
+    SysFreeString(arg.bstrVal);
+
+    if (FAILED(hr) || retVal.vt != VT_DISPATCH || !retVal.pdispVal) {
+        VariantClear(&retVal);
+        return result;
+    }
+
+    IDispatch* pFileInfo = retVal.pdispVal;
+
+    // Item 메서드로 각 속성 추출
+    auto getItem = [&](const wchar_t* itemName) -> std::wstring {
+        DISPID dispidItem;
+        OLECHAR* itemMethod = const_cast<OLECHAR*>(L"Item");
+        hr = pFileInfo->GetIDsOfNames(IID_NULL, &itemMethod, 1, LOCALE_USER_DEFAULT, &dispidItem);
+        if (FAILED(hr)) return L"";
+
+        VARIANT vItemName;
+        VariantInit(&vItemName);
+        vItemName.vt = VT_BSTR;
+        vItemName.bstrVal = SysAllocString(itemName);
+
+        DISPPARAMS itemParams = { &vItemName, NULL, 1, 0 };
+        VARIANT itemResult;
+        VariantInit(&itemResult);
+
+        hr = pFileInfo->Invoke(dispidItem, IID_NULL, LOCALE_USER_DEFAULT,
+                               DISPATCH_METHOD | DISPATCH_PROPERTYGET, &itemParams, &itemResult, NULL, NULL);
+        SysFreeString(vItemName.bstrVal);
+
+        std::wstring value;
+        if (SUCCEEDED(hr)) {
+            if (itemResult.vt == VT_BSTR && itemResult.bstrVal) {
+                value = itemResult.bstrVal;
+            } else if (itemResult.vt == VT_I4) {
+                value = std::to_wstring(itemResult.lVal);
+            } else if (itemResult.vt == VT_UI4) {
+                wchar_t buf[32];
+                swprintf_s(buf, L"0x%08X", itemResult.ulVal);
+                value = buf;
+            }
+        }
+        VariantClear(&itemResult);
+        return value;
+    };
+
+    result[L"Format"] = getItem(L"Format");
+    result[L"VersionStr"] = getItem(L"VersionStr");
+    result[L"VersionNum"] = getItem(L"VersionNum");
+    result[L"Encrypted"] = getItem(L"Encrypted");
+
+    pFileInfo->Release();
+    return result;
+}
+
 //=============================================================================
 // 텍스트 편집
 //=============================================================================
@@ -888,6 +1564,166 @@ bool HwpWrapper::MovePos(int move_id, int para, int pos)
 
     if (FAILED(hr)) return false;
     return (result.vt == VT_BOOL) ? (result.boolVal != VARIANT_FALSE) : true;
+}
+
+bool HwpWrapper::InitScan(int option, int range, int spara, int spos, int epara, int epos)
+{
+    if (!m_pHwp) return false;
+
+    DISPID dispid;
+    OLECHAR* name = const_cast<OLECHAR*>(L"InitScan");
+    HRESULT hr = m_pHwp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    // 파라미터 순서: epos, epara, spos, spara, range, option (역순)
+    VARIANT args[6];
+    for (int i = 0; i < 6; i++) VariantInit(&args[i]);
+
+    args[0].vt = VT_I4; args[0].lVal = epos;
+    args[1].vt = VT_I4; args[1].lVal = epara;
+    args[2].vt = VT_I4; args[2].lVal = spos;
+    args[3].vt = VT_I4; args[3].lVal = spara;
+    args[4].vt = VT_I4; args[4].lVal = range;
+    args[5].vt = VT_I4; args[5].lVal = option;
+
+    DISPPARAMS params = { args, NULL, 6, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
+
+    if (FAILED(hr)) return false;
+    return (result.vt == VT_BOOL) ? (result.boolVal != VARIANT_FALSE) : true;
+}
+
+void HwpWrapper::ReleaseScan()
+{
+    if (!m_pHwp) return;
+
+    DISPID dispid;
+    OLECHAR* name = const_cast<OLECHAR*>(L"ReleaseScan");
+    HRESULT hr = m_pHwp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return;
+
+    DISPPARAMS params = { NULL, NULL, 0, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                   &params, &result, NULL, NULL);
+    VariantClear(&result);
+}
+
+bool HwpWrapper::SelectText(int spara, int spos, int epara, int epos, int slist)
+{
+    if (!m_pHwp) return false;
+
+    // 먼저 set_pos로 리스트 설정
+    SetPos(slist, 0, 0);
+
+    DISPID dispid;
+    OLECHAR* name = const_cast<OLECHAR*>(L"SelectText");
+    HRESULT hr = m_pHwp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    // 파라미터 순서: epos, epara, spos, spara (역순)
+    VARIANT args[4];
+    for (int i = 0; i < 4; i++) VariantInit(&args[i]);
+
+    args[0].vt = VT_I4; args[0].lVal = epos;
+    args[1].vt = VT_I4; args[1].lVal = epara;
+    args[2].vt = VT_I4; args[2].lVal = spos;
+    args[3].vt = VT_I4; args[3].lVal = spara;
+
+    DISPPARAMS params = { args, NULL, 4, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
+
+    if (FAILED(hr)) return false;
+    return (result.vt == VT_BOOL) ? (result.boolVal != VARIANT_FALSE) : true;
+}
+
+bool HwpWrapper::SelectTextByGetPos(const HwpPos& s_pos, const HwpPos& e_pos)
+{
+    // set_pos로 리스트 설정 후 SelectText 호출
+    SetPos(s_pos.list, 0, 0);
+    return SelectText(s_pos.para, s_pos.pos, e_pos.para, e_pos.pos, s_pos.list);
+}
+
+IDispatch* HwpWrapper::GetPosBySet()
+{
+    if (!m_pHwp) return nullptr;
+
+    DISPID dispid;
+    OLECHAR* name = const_cast<OLECHAR*>(L"GetPosBySet");
+    HRESULT hr = m_pHwp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return nullptr;
+
+    DISPPARAMS params = { NULL, NULL, 0, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
+
+    if (FAILED(hr) || result.vt != VT_DISPATCH) {
+        VariantClear(&result);
+        return nullptr;
+    }
+
+    return result.pdispVal;
+}
+
+bool HwpWrapper::SetPosBySet(IDispatch* pDispVal)
+{
+    if (!m_pHwp || !pDispVal) return false;
+
+    DISPID dispid;
+    OLECHAR* name = const_cast<OLECHAR*>(L"SetPosBySet");
+    HRESULT hr = m_pHwp->GetIDsOfNames(IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    VARIANT arg;
+    VariantInit(&arg);
+    arg.vt = VT_DISPATCH;
+    arg.pdispVal = pDispVal;
+
+    DISPPARAMS params = { &arg, NULL, 1, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
+
+    VariantClear(&result);
+    return SUCCEEDED(hr);
+}
+
+int HwpWrapper::GetPosBySetPy()
+{
+    IDispatch* pPos = GetPosBySet();
+    if (!pPos) return -1;
+
+    m_posCache.push_back(pPos);
+    return static_cast<int>(m_posCache.size() - 1);
+}
+
+bool HwpWrapper::SetPosBySetPy(int idx)
+{
+    if (idx < 0 || idx >= static_cast<int>(m_posCache.size())) return false;
+    return SetPosBySet(m_posCache[idx]);
+}
+
+void HwpWrapper::ClearPosCache()
+{
+    for (auto p : m_posCache) {
+        if (p) p->Release();
+    }
+    m_posCache.clear();
 }
 
 //=============================================================================
@@ -1387,30 +2223,98 @@ bool HwpWrapper::FindCtrl()
     return success;
 }
 
-bool HwpWrapper::SetPosBySet(IDispatch* pDispVal)
+//=============================================================================
+// 컨트롤 관리
+//=============================================================================
+
+std::unique_ptr<HwpCtrl> HwpWrapper::InsertCtrl(const std::wstring& ctrl_id,
+                                                  IDispatch* initparam)
 {
-    if (!m_pHwp || !pDispVal) return false;
+    if (!m_pHwp) return nullptr;
 
-    DISPID dispid = m_dispidCache.GetOrLoad(m_pHwp, L"SetPosBySet");
-    if (dispid == DISPID_UNKNOWN) return false;
+    HRESULT hr;
+    DISPID dispid;
 
-    // SetPosBySet(dispVal) - positional parameter
+    // 1. InsertCtrl 메서드의 DISPID 획득
+    OLECHAR* methodName = const_cast<OLECHAR*>(L"InsertCtrl");
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, &methodName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return nullptr;
+
+    // 2. InsertCtrl(CtrlID, initparam) 호출
+    VARIANT args[2];
+    VariantInit(&args[0]);
+    VariantInit(&args[1]);
+
+    // 인자는 역순 (initparam, CtrlID)
+    if (initparam) {
+        args[0].vt = VT_DISPATCH;
+        args[0].pdispVal = initparam;
+    } else {
+        args[0].vt = VT_ERROR;
+        args[0].scode = DISP_E_PARAMNOTFOUND;  // Optional parameter
+    }
+    args[1].vt = VT_BSTR;
+    args[1].bstrVal = SysAllocString(ctrl_id.c_str());
+
+    DISPPARAMS params = { args, NULL, 2, 0 };
+    VARIANT result;
+    VariantInit(&result);
+
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
+
+    SysFreeString(args[1].bstrVal);
+
+    if (FAILED(hr)) return nullptr;
+
+    // 3. 반환된 컨트롤 객체 래핑
+    if (result.vt == VT_DISPATCH && result.pdispVal) {
+        IDispatch* pCtrl = result.pdispVal;
+        // HwpCtrl 생성자에서 AddRef를 하므로 여기서 Release 필요
+        auto ctrl = std::make_unique<HwpCtrl>(pCtrl, this);
+        pCtrl->Release();
+        return ctrl;
+    }
+
+    return nullptr;
+}
+
+bool HwpWrapper::DeleteCtrl(HwpCtrl* ctrl)
+{
+    if (!ctrl || !ctrl->IsValid()) return false;
+    return DeleteCtrl(ctrl->GetDispatch());
+}
+
+bool HwpWrapper::DeleteCtrl(IDispatch* pCtrl)
+{
+    if (!m_pHwp || !pCtrl) return false;
+
+    HRESULT hr;
+    DISPID dispid;
+
+    // 1. DeleteCtrl 메서드의 DISPID 획득
+    OLECHAR* methodName = const_cast<OLECHAR*>(L"DeleteCtrl");
+    hr = m_pHwp->GetIDsOfNames(IID_NULL, &methodName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    // 2. DeleteCtrl(ctrl) 호출
     VARIANT arg;
     VariantInit(&arg);
     arg.vt = VT_DISPATCH;
-    arg.pdispVal = pDispVal;
+    arg.pdispVal = pCtrl;
 
     DISPPARAMS params = { &arg, NULL, 1, 0 };
     VARIANT result;
     VariantInit(&result);
 
-    HRESULT hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT,
-                                DISPATCH_METHOD, &params, &result, NULL, NULL);
+    hr = m_pHwp->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                        &params, &result, NULL, NULL);
 
-    bool success = SUCCEEDED(hr);
-    VariantClear(&result);
+    if (FAILED(hr)) return false;
 
-    return success;
+    // 3. 결과 반환
+    if (result.vt == VT_BOOL) return result.boolVal != VARIANT_FALSE;
+    return true;  // 성공으로 간주
 }
 
 //=============================================================================
@@ -1483,6 +2387,126 @@ void HwpWrapper::SetEditMode(bool mode)
     val.boolVal = mode ? VARIANT_TRUE : VARIANT_FALSE;
 
     SetProperty(L"EditMode", val);
+}
+
+//=============================================================================
+// 컨트롤 속성 접근
+//=============================================================================
+
+std::unique_ptr<HwpCtrl> HwpWrapper::GetCurSelectedCtrl()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"CurSelectedCtrl");
+    if (result.vt == VT_DISPATCH && result.pdispVal) {
+        return std::make_unique<HwpCtrl>(result.pdispVal, this);
+    }
+    return nullptr;
+}
+
+std::unique_ptr<HwpCtrl> HwpWrapper::GetHeadCtrl()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"HeadCtrl");
+    if (result.vt == VT_DISPATCH && result.pdispVal) {
+        return std::make_unique<HwpCtrl>(result.pdispVal, this);
+    }
+    return nullptr;
+}
+
+std::unique_ptr<HwpCtrl> HwpWrapper::GetLastCtrl()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"LastCtrl");
+    if (result.vt == VT_DISPATCH && result.pdispVal) {
+        return std::make_unique<HwpCtrl>(result.pdispVal, this);
+    }
+    return nullptr;
+}
+
+std::unique_ptr<HwpCtrl> HwpWrapper::GetParentCtrl()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"ParentCtrl");
+    if (result.vt == VT_DISPATCH && result.pdispVal) {
+        return std::make_unique<HwpCtrl>(result.pdispVal, this);
+    }
+    return nullptr;
+}
+
+std::vector<std::unique_ptr<HwpCtrl>> HwpWrapper::GetCtrlList()
+{
+    std::vector<std::unique_ptr<HwpCtrl>> result;
+    if (!m_pHwp) return result;
+
+    // HeadCtrl부터 시작
+    auto ctrl = GetHeadCtrl();
+    if (!ctrl) return result;
+
+    // secd(섹션정의) 스킵
+    ctrl = ctrl->Next();
+    if (!ctrl) return result;
+
+    // cold(단정의) 스킵
+    ctrl = ctrl->Next();
+
+    // 나머지 모든 컨트롤 순회
+    while (ctrl) {
+        auto next = ctrl->Next();
+        result.push_back(std::move(ctrl));
+        ctrl = std::move(next);
+    }
+
+    return result;
+}
+
+//=============================================================================
+// 문서 컬렉션 접근
+//=============================================================================
+
+std::unique_ptr<XHwpDocuments> HwpWrapper::GetXHwpDocuments()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"XHwpDocuments");
+    if (result.vt == VT_DISPATCH && result.pdispVal) {
+        return std::make_unique<XHwpDocuments>(result.pdispVal);
+    }
+    return nullptr;
+}
+
+std::unique_ptr<XHwpDocument> HwpWrapper::SwitchTo(int num)
+{
+    auto docs = GetXHwpDocuments();
+    if (!docs) return nullptr;
+
+    int count = docs->GetCount();
+    if (num < 0 || num >= count) return nullptr;
+
+    auto doc = docs->Item(num);
+    if (doc) {
+        doc->SetActiveDocument();
+    }
+    return doc;
+}
+
+std::unique_ptr<XHwpDocument> HwpWrapper::AddTab()
+{
+    auto docs = GetXHwpDocuments();
+    if (!docs) return nullptr;
+
+    return docs->Add(true);  // isTab = true
+}
+
+std::unique_ptr<XHwpDocument> HwpWrapper::AddDoc()
+{
+    auto docs = GetXHwpDocuments();
+    if (!docs) return nullptr;
+
+    return docs->Add(false);  // isTab = false (new window)
 }
 
 //=============================================================================
@@ -2432,6 +3456,231 @@ bool HwpWrapper::TableRightCellAppend()
     return RunAction(L"TableRightCellAppend");
 }
 
+bool HwpWrapper::TableColBegin()
+{
+    return RunAction(L"TableColBegin");
+}
+
+bool HwpWrapper::TableColEnd()
+{
+    return RunAction(L"TableColEnd");
+}
+
+bool HwpWrapper::TableColPageUp()
+{
+    return RunAction(L"TableColPageUp");
+}
+
+bool HwpWrapper::TableCellBlockExtendAbs()
+{
+    return RunAction(L"TableCellBlockExtendAbs");
+}
+
+bool HwpWrapper::Cancel()
+{
+    return RunAction(L"Cancel");
+}
+
+bool HwpWrapper::CellFill(int r, int g, int b)
+{
+    if (!m_pHwp) return false;
+
+    // CellShape 파라미터셋 생성
+    IDispatch* pSet = CreateSet(L"CellShape");
+    if (!pSet) return false;
+
+    // FillAttr 하위 파라미터셋 접근
+    DISPID dispidItem = m_dispidCache.GetOrLoad(pSet, L"Item");
+    if (dispidItem == DISPID_UNKNOWN) {
+        pSet->Release();
+        return false;
+    }
+
+    VARIANT argFillAttr;
+    VariantInit(&argFillAttr);
+    argFillAttr.vt = VT_BSTR;
+    argFillAttr.bstrVal = SysAllocString(L"FillAttr");
+
+    DISPPARAMS params = { &argFillAttr, NULL, 1, 0 };
+    VARIANT vFillAttr;
+    VariantInit(&vFillAttr);
+
+    HRESULT hr = pSet->Invoke(dispidItem, IID_NULL, LOCALE_USER_DEFAULT,
+                               DISPATCH_PROPERTYGET, &params, &vFillAttr, NULL, NULL);
+    SysFreeString(argFillAttr.bstrVal);
+
+    if (FAILED(hr) || vFillAttr.vt != VT_DISPATCH || !vFillAttr.pdispVal) {
+        pSet->Release();
+        return false;
+    }
+
+    IDispatch* pFillAttr = vFillAttr.pdispVal;
+
+    // FillAttr.Type = 1 (단색)
+    DISPID dispidType = m_dispidCache.GetOrLoad(pFillAttr, L"Type");
+    if (dispidType != DISPID_UNKNOWN) {
+        VARIANT vType;
+        VariantInit(&vType);
+        vType.vt = VT_I4;
+        vType.lVal = 1;
+
+        DISPID dispidPut = DISPID_PROPERTYPUT;
+        DISPPARAMS paramsType = { &vType, &dispidPut, 1, 1 };
+        pFillAttr->Invoke(dispidType, IID_NULL, LOCALE_USER_DEFAULT,
+                          DISPATCH_PROPERTYPUT, &paramsType, NULL, NULL, NULL);
+    }
+
+    // FaceColor 설정 (RGB -> COLORREF)
+    DISPID dispidFaceColor = m_dispidCache.GetOrLoad(pFillAttr, L"FaceColor");
+    if (dispidFaceColor != DISPID_UNKNOWN) {
+        COLORREF color = RGB(r, g, b);
+        VARIANT vColor;
+        VariantInit(&vColor);
+        vColor.vt = VT_I4;
+        vColor.lVal = static_cast<long>(color);
+
+        DISPID dispidPut = DISPID_PROPERTYPUT;
+        DISPPARAMS paramsColor = { &vColor, &dispidPut, 1, 1 };
+        pFillAttr->Invoke(dispidFaceColor, IID_NULL, LOCALE_USER_DEFAULT,
+                          DISPATCH_PROPERTYPUT, &paramsColor, NULL, NULL, NULL);
+    }
+
+    // CellShape 액션 실행
+    IDispatch* pAction = CreateAction(L"CellShape");
+    if (!pAction) {
+        pFillAttr->Release();
+        pSet->Release();
+        return false;
+    }
+
+    // GetDefault 호출
+    DISPID dispidGetDefault = m_dispidCache.GetOrLoad(pAction, L"GetDefault");
+    if (dispidGetDefault != DISPID_UNKNOWN) {
+        DISPPARAMS paramsEmpty = { NULL, NULL, 0, 0 };
+        VARIANT vDefault;
+        VariantInit(&vDefault);
+        pAction->Invoke(dispidGetDefault, IID_NULL, LOCALE_USER_DEFAULT,
+                        DISPATCH_METHOD, &paramsEmpty, &vDefault, NULL, NULL);
+        VariantClear(&vDefault);
+    }
+
+    // Execute
+    DISPID dispidExecute = m_dispidCache.GetOrLoad(pAction, L"Execute");
+    bool success = false;
+    if (dispidExecute != DISPID_UNKNOWN) {
+        VARIANT argSet;
+        VariantInit(&argSet);
+        argSet.vt = VT_DISPATCH;
+        argSet.pdispVal = pSet;
+
+        DISPPARAMS paramsExec = { &argSet, NULL, 1, 0 };
+        VARIANT vResult;
+        VariantInit(&vResult);
+
+        hr = pAction->Invoke(dispidExecute, IID_NULL, LOCALE_USER_DEFAULT,
+                             DISPATCH_METHOD, &paramsExec, &vResult, NULL, NULL);
+        if (SUCCEEDED(hr) && vResult.vt == VT_BOOL) {
+            success = (vResult.boolVal != VARIANT_FALSE);
+        }
+        VariantClear(&vResult);
+    }
+
+    pAction->Release();
+    pFillAttr->Release();
+    pSet->Release();
+
+    return success;
+}
+
+bool HwpWrapper::TableFromData(
+    const std::vector<std::vector<std::wstring>>& data,
+    bool treat_as_char,
+    bool header,
+    bool header_bold,
+    int cell_fill_r,
+    int cell_fill_g,
+    int cell_fill_b)
+{
+    if (data.empty() || data[0].empty()) return false;
+
+    int rows = static_cast<int>(data.size());
+    int cols = static_cast<int>(data[0].size());
+
+    // 1. 테이블 생성
+    if (!CreateTable(rows, cols, treat_as_char, 0, 0, header)) {
+        return false;
+    }
+
+    // 2. 데이터 채우기
+    for (int row = 0; row < rows; ++row) {
+        for (int col = 0; col < static_cast<int>(data[row].size()); ++col) {
+            InsertText(data[row][col]);
+            if (col < cols - 1) {
+                TableRightCell();
+            }
+        }
+        if (row < rows - 1) {
+            TableRightCellAppend();  // 다음 행으로 이동
+        }
+    }
+
+    // 3. 헤더 행 서식 적용
+    if (header_bold || cell_fill_r >= 0) {
+        // 첫 번째 열로 이동
+        TableColBegin();
+        // 열의 맨 위로 이동
+        TableColPageUp();
+        // 셀 블록 선택 확장
+        TableCellBlockExtendAbs();
+        // 마지막 열까지 선택
+        TableColEnd();
+
+        // 볼드 적용
+        if (header_bold) {
+            RunAction(L"CharShapeBold");
+        }
+
+        // 배경색 적용
+        if (cell_fill_r >= 0 && cell_fill_g >= 0 && cell_fill_b >= 0) {
+            CellFill(cell_fill_r, cell_fill_g, cell_fill_b);
+        }
+
+        // 선택 취소
+        Cancel();
+    }
+
+    return true;
+}
+
+std::wstring HwpWrapper::GetTableXml()
+{
+    // 현재 테이블의 XML 추출 (HWPML2X 형식)
+    // Python에서 파싱하여 DataFrame으로 변환
+
+    if (!IsCell()) {
+        return L"";
+    }
+
+    // 1. 테이블 전체 선택
+    // 셀 블록 시작
+    TableColBegin();
+    TableColPageUp();
+    TableCellBlockExtendAbs();
+    // 마지막 셀까지 확장
+    TableColEnd();
+    while (TableLowerCell()) {
+        // 끝까지 이동
+    }
+
+    // 2. 선택된 테이블을 HWPML2X로 추출
+    std::wstring xml = GetTextFile(L"HWPML2X", L"");
+
+    // 3. 선택 취소
+    Cancel();
+
+    return xml;
+}
+
 //=============================================================================
 // 이미지 삽입 (Image Insertion)
 //=============================================================================
@@ -2483,6 +3732,684 @@ bool HwpWrapper::InsertPicture(const std::wstring& path,
     VariantClear(&result);
 
     return success;
+}
+
+//=============================================================================
+// 스타일 관리 (CharShape/ParaShape)
+//=============================================================================
+
+std::map<std::wstring, int> HwpWrapper::GetCharShape()
+{
+    std::map<std::wstring, int> result;
+    if (!m_pHwp) return result;
+
+    // hwp.CharShape 속성 가져오기 (HParameterSet.HCharShape가 아님!)
+    DISPID dispidCharShape;
+    OLECHAR* charShapeName = const_cast<OLECHAR*>(L"CharShape");
+    HRESULT hr = m_pHwp->GetIDsOfNames(IID_NULL, &charShapeName, 1,
+                                        LOCALE_USER_DEFAULT, &dispidCharShape);
+    if (FAILED(hr)) {
+        result[L"_error"] = -30000 - (int)(hr & 0xFFFF);
+        return result;
+    }
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    VARIANT vCharShape;
+    VariantInit(&vCharShape);
+    hr = m_pHwp->Invoke(dispidCharShape, IID_NULL, LOCALE_USER_DEFAULT,
+                         DISPATCH_PROPERTYGET, &noParams, &vCharShape, NULL, NULL);
+    if (FAILED(hr) || vCharShape.vt != VT_DISPATCH || !vCharShape.pdispVal) {
+        result[L"_error"] = -31000 - (int)(hr & 0xFFFF);
+        VariantClear(&vCharShape);
+        return result;
+    }
+
+    IDispatch* pCharShape = vCharShape.pdispVal;
+
+    // 주요 CharShape 속성들
+    const wchar_t* charShapeProps[] = {
+        L"Height",          // 글자 크기 (pt * 100)
+        L"Bold",            // 볼드
+        L"Italic",          // 이탤릭
+        L"UnderlineType",   // 밑줄 타입 (0=없음, 1=아래, 3=위)
+        L"UnderlineShape",  // 밑줄 모양 (0-12)
+        L"UnderlineColor",  // 밑줄 색상
+        L"StrikeOutType",   // 취소선 타입 (True/False)
+        L"StrikeOutShape",  // 취소선 모양 (0-12)
+        L"StrikeOutColor",  // 취소선 색상
+        L"TextColor",       // 글자색
+        L"ShadeColor",      // 음영색
+        L"Superscript",     // 위첨자
+        L"Subscript",       // 아래첨자
+        L"UseFontSpace",    // 글꼴 간격 사용
+        L"UseKerning",      // 커닝 사용
+        L"BorderType"       // 테두리 종류
+    };
+
+    // Item 메서드 DISPID 가져오기
+    DISPID dispidItem;
+    OLECHAR* itemName = const_cast<OLECHAR*>(L"Item");
+    hr = pCharShape->GetIDsOfNames(IID_NULL, &itemName, 1, LOCALE_USER_DEFAULT, &dispidItem);
+    if (SUCCEEDED(hr)) {
+        for (const wchar_t* propName : charShapeProps) {
+            VARIANT vPropName;
+            VariantInit(&vPropName);
+            vPropName.vt = VT_BSTR;
+            vPropName.bstrVal = SysAllocString(propName);
+
+            DISPPARAMS itemParams = { &vPropName, NULL, 1, 0 };
+            VARIANT vValue;
+            VariantInit(&vValue);
+
+            // Item은 메서드이므로 DISPATCH_METHOD 사용
+            hr = pCharShape->Invoke(dispidItem, IID_NULL, LOCALE_USER_DEFAULT,
+                                     DISPATCH_METHOD, &itemParams, &vValue, NULL, NULL);
+            if (SUCCEEDED(hr)) {
+                switch (vValue.vt) {
+                    case VT_I4:
+                        result[propName] = vValue.lVal;
+                        break;
+                    case VT_I2:
+                        result[propName] = vValue.iVal;
+                        break;
+                    case VT_I1:
+                        result[propName] = vValue.cVal;
+                        break;
+                    case VT_UI1:
+                        result[propName] = vValue.bVal;
+                        break;
+                    case VT_UI2:
+                        result[propName] = vValue.uiVal;
+                        break;
+                    case VT_UI4:
+                        result[propName] = static_cast<int>(vValue.ulVal);
+                        break;
+                    case VT_BOOL:
+                        result[propName] = (vValue.boolVal != VARIANT_FALSE) ? 1 : 0;
+                        break;
+                    case VT_R4:
+                        result[propName] = static_cast<int>(vValue.fltVal);
+                        break;
+                    case VT_R8:
+                        result[propName] = static_cast<int>(vValue.dblVal);
+                        break;
+                    case VT_EMPTY:
+                    case VT_NULL:
+                        // 값 없음 - 스킵
+                        break;
+                    default:
+                        // 디버그: 알 수 없는 타입 (음수로 타입 코드 저장)
+                        result[propName] = -1000 - (int)vValue.vt;
+                        break;
+                }
+            }
+            VariantClear(&vValue);
+            SysFreeString(vPropName.bstrVal);
+        }
+    } else {
+        result[L"_error"] = -20000 - (int)(hr & 0xFFFF);
+    }
+
+    pCharShape->Release();
+    return result;
+}
+
+bool HwpWrapper::SetCharShape(const std::map<std::wstring, int>& props)
+{
+    if (!m_pHwp || props.empty()) return false;
+
+    // 1. HParameterSet.HCharShape 가져오기
+    IDispatch* pHParameterSet = GetHParameterSet();
+    if (!pHParameterSet) return false;
+
+    DISPID dispidHCharShape;
+    OLECHAR* charShapeName = const_cast<OLECHAR*>(L"HCharShape");
+    HRESULT hr = pHParameterSet->GetIDsOfNames(IID_NULL, &charShapeName, 1,
+                                                LOCALE_USER_DEFAULT, &dispidHCharShape);
+    if (FAILED(hr)) return false;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    VARIANT vCharShape;
+    VariantInit(&vCharShape);
+    hr = pHParameterSet->Invoke(dispidHCharShape, IID_NULL, LOCALE_USER_DEFAULT,
+                                 DISPATCH_PROPERTYGET, &noParams, &vCharShape, NULL, NULL);
+    if (FAILED(hr) || vCharShape.vt != VT_DISPATCH || !vCharShape.pdispVal) {
+        VariantClear(&vCharShape);
+        return false;
+    }
+
+    IDispatch* pCharShape = vCharShape.pdispVal;
+
+    // 2. HSet 가져오기 (Execute에 필요)
+    DISPID dispidHSet;
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pCharShape->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispidHSet);
+    if (FAILED(hr)) {
+        pCharShape->Release();
+        return false;
+    }
+
+    VARIANT vHSet;
+    VariantInit(&vHSet);
+    hr = pCharShape->Invoke(dispidHSet, IID_NULL, LOCALE_USER_DEFAULT,
+                             DISPATCH_PROPERTYGET, &noParams, &vHSet, NULL, NULL);
+    if (FAILED(hr) || vHSet.vt != VT_DISPATCH || !vHSet.pdispVal) {
+        VariantClear(&vHSet);
+        pCharShape->Release();
+        return false;
+    }
+
+    IDispatch* pHSet = vHSet.pdispVal;
+
+    // 3. 속성값 설정 (각 속성을 직접 설정) - GetDefault 호출 없이!
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pHSet->Release();
+        pCharShape->Release();
+        return false;
+    }
+
+    for (const auto& prop : props) {
+        DISPID dispidProp;
+        OLECHAR* propName = const_cast<OLECHAR*>(prop.first.c_str());
+        hr = pCharShape->GetIDsOfNames(IID_NULL, &propName, 1, LOCALE_USER_DEFAULT, &dispidProp);
+        if (SUCCEEDED(hr)) {
+            VARIANT vValue;
+            VariantInit(&vValue);
+            vValue.vt = VT_I4;
+            vValue.lVal = prop.second;
+
+            DISPID putid = DISPID_PROPERTYPUT;
+            DISPPARAMS params = { &vValue, &putid, 1, 1 };
+
+            pCharShape->Invoke(dispidProp, IID_NULL, LOCALE_USER_DEFAULT,
+                                DISPATCH_PROPERTYPUT, &params, NULL, NULL, NULL);
+        }
+    }
+
+    // 4. HAction.Execute 호출
+    bool success = false;
+    DISPID dispidExecute;
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispidExecute);
+    if (SUCCEEDED(hr)) {
+        VARIANT args[2];
+        VariantInit(&args[0]);
+        VariantInit(&args[1]);
+        args[0].vt = VT_DISPATCH;
+        args[0].pdispVal = pHSet;
+        args[1].vt = VT_BSTR;
+        args[1].bstrVal = SysAllocString(L"CharShape");
+
+        DISPPARAMS params = { args, NULL, 2, 0 };
+        VARIANT vResult;
+        VariantInit(&vResult);
+
+        hr = pHAction->Invoke(dispidExecute, IID_NULL, LOCALE_USER_DEFAULT,
+                               DISPATCH_METHOD, &params, &vResult, NULL, NULL);
+        if (SUCCEEDED(hr) && vResult.vt == VT_BOOL) {
+            success = (vResult.boolVal != VARIANT_FALSE);
+        } else if (SUCCEEDED(hr)) {
+            success = true;
+        }
+
+        SysFreeString(args[1].bstrVal);
+        VariantClear(&vResult);
+    }
+
+    pHSet->Release();
+    pCharShape->Release();
+
+    return success;
+}
+
+bool HwpWrapper::SetFont(const std::wstring& face_name,
+                          int height,
+                          int bold,
+                          int italic,
+                          int text_color)
+{
+    std::map<std::wstring, int> props;
+
+    if (height >= 0) {
+        props[L"Height"] = height;
+    }
+    if (bold >= 0) {
+        props[L"Bold"] = bold;
+    }
+    if (italic >= 0) {
+        props[L"Italic"] = italic;
+    }
+    if (text_color >= 0) {
+        props[L"TextColor"] = text_color;
+    }
+
+    // 글꼴 이름 설정은 별도 처리 필요 (문자열 속성)
+    if (!face_name.empty()) {
+        // 간단히 HAction 방식 사용
+        if (!m_pHwp) return false;
+
+        IDispatch* pHParameterSet = GetHParameterSet();
+        if (!pHParameterSet) return false;
+
+        DISPID dispidHCharShape;
+        OLECHAR* charShapeName = const_cast<OLECHAR*>(L"HCharShape");
+        HRESULT hr = pHParameterSet->GetIDsOfNames(IID_NULL, &charShapeName, 1,
+                                                    LOCALE_USER_DEFAULT, &dispidHCharShape);
+        if (SUCCEEDED(hr)) {
+            DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+            VARIANT vCharShape;
+            VariantInit(&vCharShape);
+            hr = pHParameterSet->Invoke(dispidHCharShape, IID_NULL, LOCALE_USER_DEFAULT,
+                                         DISPATCH_PROPERTYGET, &noParams, &vCharShape, NULL, NULL);
+            if (SUCCEEDED(hr) && vCharShape.vt == VT_DISPATCH && vCharShape.pdispVal) {
+                IDispatch* pCharShape = vCharShape.pdispVal;
+
+                DISPID dispidItem;
+                OLECHAR* itemName = const_cast<OLECHAR*>(L"Item");
+                hr = pCharShape->GetIDsOfNames(IID_NULL, &itemName, 1, LOCALE_USER_DEFAULT, &dispidItem);
+                if (SUCCEEDED(hr)) {
+                    // FaceNameHangul 설정
+                    const wchar_t* fontProps[] = { L"FaceNameHangul", L"FaceNameLatin", L"FaceNameHanja" };
+                    for (const wchar_t* fontProp : fontProps) {
+                        VARIANT vPropName, vValue;
+                        VariantInit(&vPropName);
+                        VariantInit(&vValue);
+
+                        vPropName.vt = VT_BSTR;
+                        vPropName.bstrVal = SysAllocString(fontProp);
+                        vValue.vt = VT_BSTR;
+                        vValue.bstrVal = SysAllocString(face_name.c_str());
+
+                        VARIANT args[2] = { vValue, vPropName };
+                        DISPID putid = DISPID_PROPERTYPUT;
+                        DISPPARAMS itemParams = { args, &putid, 2, 1 };
+
+                        pCharShape->Invoke(dispidItem, IID_NULL, LOCALE_USER_DEFAULT,
+                                            DISPATCH_PROPERTYPUT, &itemParams, NULL, NULL, NULL);
+
+                        SysFreeString(vPropName.bstrVal);
+                        SysFreeString(vValue.bstrVal);
+                    }
+                }
+                pCharShape->Release();
+            }
+        }
+    }
+
+    if (props.empty() && face_name.empty()) {
+        return true;  // 변경할 내용 없음
+    }
+
+    if (!props.empty()) {
+        return SetCharShape(props);
+    }
+
+    // 글꼴만 변경한 경우 Execute 호출 필요
+    if (!face_name.empty()) {
+        IDispatch* pHAction = GetHAction();
+        if (!pHAction) return false;
+
+        IDispatch* pHParameterSet = GetHParameterSet();
+        if (!pHParameterSet) return false;
+
+        DISPID dispidHCharShape;
+        OLECHAR* charShapeName = const_cast<OLECHAR*>(L"HCharShape");
+        HRESULT hr = pHParameterSet->GetIDsOfNames(IID_NULL, &charShapeName, 1,
+                                                    LOCALE_USER_DEFAULT, &dispidHCharShape);
+        if (FAILED(hr)) return false;
+
+        DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+        VARIANT vCharShape;
+        VariantInit(&vCharShape);
+        hr = pHParameterSet->Invoke(dispidHCharShape, IID_NULL, LOCALE_USER_DEFAULT,
+                                     DISPATCH_PROPERTYGET, &noParams, &vCharShape, NULL, NULL);
+        if (FAILED(hr) || vCharShape.vt != VT_DISPATCH) return false;
+
+        IDispatch* pCharShape = vCharShape.pdispVal;
+
+        DISPID dispidHSet;
+        OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+        hr = pCharShape->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispidHSet);
+        if (FAILED(hr)) {
+            pCharShape->Release();
+            return false;
+        }
+
+        VARIANT vHSet;
+        VariantInit(&vHSet);
+        hr = pCharShape->Invoke(dispidHSet, IID_NULL, LOCALE_USER_DEFAULT,
+                                 DISPATCH_PROPERTYGET, &noParams, &vHSet, NULL, NULL);
+        if (FAILED(hr) || vHSet.vt != VT_DISPATCH) {
+            pCharShape->Release();
+            return false;
+        }
+
+        IDispatch* pHSet = vHSet.pdispVal;
+
+        // Execute
+        DISPID dispidExecute;
+        OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+        hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispidExecute);
+        bool success = false;
+        if (SUCCEEDED(hr)) {
+            VARIANT args[2];
+            VariantInit(&args[0]);
+            VariantInit(&args[1]);
+            args[0].vt = VT_DISPATCH;
+            args[0].pdispVal = pHSet;
+            args[1].vt = VT_BSTR;
+            args[1].bstrVal = SysAllocString(L"CharShape");
+
+            DISPPARAMS params = { args, NULL, 2, 0 };
+            VARIANT vResult;
+            VariantInit(&vResult);
+
+            hr = pHAction->Invoke(dispidExecute, IID_NULL, LOCALE_USER_DEFAULT,
+                                   DISPATCH_METHOD, &params, &vResult, NULL, NULL);
+            success = SUCCEEDED(hr);
+
+            SysFreeString(args[1].bstrVal);
+            VariantClear(&vResult);
+        }
+
+        pHSet->Release();
+        pCharShape->Release();
+        return success;
+    }
+
+    return true;
+}
+
+std::map<std::wstring, int> HwpWrapper::GetParaShape()
+{
+    std::map<std::wstring, int> result;
+    if (!m_pHwp) return result;
+
+    // 1. HParameterSet.HParaShape 가져오기
+    IDispatch* pHParameterSet = GetHParameterSet();
+    if (!pHParameterSet) return result;
+
+    DISPID dispidHParaShape;
+    OLECHAR* paraShapeName = const_cast<OLECHAR*>(L"HParaShape");
+    HRESULT hr = pHParameterSet->GetIDsOfNames(IID_NULL, &paraShapeName, 1,
+                                                LOCALE_USER_DEFAULT, &dispidHParaShape);
+    if (FAILED(hr)) return result;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    VARIANT vParaShape;
+    VariantInit(&vParaShape);
+    hr = pHParameterSet->Invoke(dispidHParaShape, IID_NULL, LOCALE_USER_DEFAULT,
+                                 DISPATCH_PROPERTYGET, &noParams, &vParaShape, NULL, NULL);
+    if (FAILED(hr) || vParaShape.vt != VT_DISPATCH || !vParaShape.pdispVal) {
+        VariantClear(&vParaShape);
+        return result;
+    }
+
+    IDispatch* pParaShape = vParaShape.pdispVal;
+
+    // 2. HAction.GetDefault 호출
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pParaShape->Release();
+        return result;
+    }
+
+    DISPID dispidHSet;
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pParaShape->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispidHSet);
+    if (FAILED(hr)) {
+        pParaShape->Release();
+        return result;
+    }
+
+    VARIANT vHSet;
+    VariantInit(&vHSet);
+    hr = pParaShape->Invoke(dispidHSet, IID_NULL, LOCALE_USER_DEFAULT,
+                             DISPATCH_PROPERTYGET, &noParams, &vHSet, NULL, NULL);
+    if (FAILED(hr) || vHSet.vt != VT_DISPATCH || !vHSet.pdispVal) {
+        VariantClear(&vHSet);
+        pParaShape->Release();
+        return result;
+    }
+
+    IDispatch* pHSet = vHSet.pdispVal;
+
+    // GetDefault 호출
+    DISPID dispidGetDefault;
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispidGetDefault);
+    if (SUCCEEDED(hr)) {
+        VARIANT args[2];
+        VariantInit(&args[0]);
+        VariantInit(&args[1]);
+        args[0].vt = VT_DISPATCH;
+        args[0].pdispVal = pHSet;
+        args[1].vt = VT_BSTR;
+        args[1].bstrVal = SysAllocString(L"ParaShape");
+
+        DISPPARAMS params = { args, NULL, 2, 0 };
+        VARIANT vResult;
+        VariantInit(&vResult);
+        pHAction->Invoke(dispidGetDefault, IID_NULL, LOCALE_USER_DEFAULT,
+                         DISPATCH_METHOD, &params, &vResult, NULL, NULL);
+        SysFreeString(args[1].bstrVal);
+        VariantClear(&vResult);
+    }
+
+    // 3. 속성값 읽기 (주요 ParaShape 속성들)
+    const wchar_t* paraShapeProps[] = {
+        L"AlignType",       // 정렬 (0=양쪽, 1=왼쪽, 2=가운데, 3=오른쪽)
+        L"LineSpacing",     // 줄간격 (%)
+        L"LeftMargin",      // 왼쪽 여백
+        L"RightMargin",     // 오른쪽 여백
+        L"Indentation",     // 첫줄 들여쓰기
+        L"PrevSpacing",     // 문단 앞 간격
+        L"NextSpacing",     // 문단 뒤 간격
+        L"LineSpacingType", // 줄간격 유형
+        L"PageBreakBefore", // 이 문단 앞에서 페이지 나누기
+        L"KeepWithNext",    // 다음 문단과 함께
+        L"WidowOrphan"      // 외톨이줄 방지
+    };
+
+    DISPID dispidItem;
+    OLECHAR* itemName = const_cast<OLECHAR*>(L"Item");
+    hr = pParaShape->GetIDsOfNames(IID_NULL, &itemName, 1, LOCALE_USER_DEFAULT, &dispidItem);
+    if (SUCCEEDED(hr)) {
+        for (const wchar_t* propName : paraShapeProps) {
+            VARIANT vPropName;
+            VariantInit(&vPropName);
+            vPropName.vt = VT_BSTR;
+            vPropName.bstrVal = SysAllocString(propName);
+
+            DISPPARAMS itemParams = { &vPropName, NULL, 1, 0 };
+            VARIANT vValue;
+            VariantInit(&vValue);
+
+            hr = pParaShape->Invoke(dispidItem, IID_NULL, LOCALE_USER_DEFAULT,
+                                     DISPATCH_PROPERTYGET, &itemParams, &vValue, NULL, NULL);
+            if (SUCCEEDED(hr)) {
+                if (vValue.vt == VT_I4) {
+                    result[propName] = vValue.lVal;
+                } else if (vValue.vt == VT_I2) {
+                    result[propName] = vValue.iVal;
+                } else if (vValue.vt == VT_BOOL) {
+                    result[propName] = (vValue.boolVal != VARIANT_FALSE) ? 1 : 0;
+                }
+            }
+            VariantClear(&vValue);
+            SysFreeString(vPropName.bstrVal);
+        }
+    }
+
+    pHSet->Release();
+    pParaShape->Release();
+
+    return result;
+}
+
+bool HwpWrapper::SetParaShape(const std::map<std::wstring, int>& props)
+{
+    if (!m_pHwp || props.empty()) return false;
+
+    // 1. HParameterSet.HParaShape 가져오기
+    IDispatch* pHParameterSet = GetHParameterSet();
+    if (!pHParameterSet) return false;
+
+    DISPID dispidHParaShape;
+    OLECHAR* paraShapeName = const_cast<OLECHAR*>(L"HParaShape");
+    HRESULT hr = pHParameterSet->GetIDsOfNames(IID_NULL, &paraShapeName, 1,
+                                                LOCALE_USER_DEFAULT, &dispidHParaShape);
+    if (FAILED(hr)) return false;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    VARIANT vParaShape;
+    VariantInit(&vParaShape);
+    hr = pHParameterSet->Invoke(dispidHParaShape, IID_NULL, LOCALE_USER_DEFAULT,
+                                 DISPATCH_PROPERTYGET, &noParams, &vParaShape, NULL, NULL);
+    if (FAILED(hr) || vParaShape.vt != VT_DISPATCH || !vParaShape.pdispVal) {
+        VariantClear(&vParaShape);
+        return false;
+    }
+
+    IDispatch* pParaShape = vParaShape.pdispVal;
+
+    // 2. HAction.GetDefault 호출
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pParaShape->Release();
+        return false;
+    }
+
+    DISPID dispidHSet;
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pParaShape->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispidHSet);
+    if (FAILED(hr)) {
+        pParaShape->Release();
+        return false;
+    }
+
+    VARIANT vHSet;
+    VariantInit(&vHSet);
+    hr = pParaShape->Invoke(dispidHSet, IID_NULL, LOCALE_USER_DEFAULT,
+                             DISPATCH_PROPERTYGET, &noParams, &vHSet, NULL, NULL);
+    if (FAILED(hr) || vHSet.vt != VT_DISPATCH || !vHSet.pdispVal) {
+        VariantClear(&vHSet);
+        pParaShape->Release();
+        return false;
+    }
+
+    IDispatch* pHSet = vHSet.pdispVal;
+
+    // GetDefault 호출
+    DISPID dispidGetDefault;
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispidGetDefault);
+    if (SUCCEEDED(hr)) {
+        VARIANT args[2];
+        VariantInit(&args[0]);
+        VariantInit(&args[1]);
+        args[0].vt = VT_DISPATCH;
+        args[0].pdispVal = pHSet;
+        args[1].vt = VT_BSTR;
+        args[1].bstrVal = SysAllocString(L"ParaShape");
+
+        DISPPARAMS params = { args, NULL, 2, 0 };
+        VARIANT vResult;
+        VariantInit(&vResult);
+        pHAction->Invoke(dispidGetDefault, IID_NULL, LOCALE_USER_DEFAULT,
+                         DISPATCH_METHOD, &params, &vResult, NULL, NULL);
+        SysFreeString(args[1].bstrVal);
+        VariantClear(&vResult);
+    }
+
+    // 3. 속성값 설정
+    DISPID dispidItem;
+    OLECHAR* itemName = const_cast<OLECHAR*>(L"Item");
+    hr = pParaShape->GetIDsOfNames(IID_NULL, &itemName, 1, LOCALE_USER_DEFAULT, &dispidItem);
+    if (SUCCEEDED(hr)) {
+        for (const auto& prop : props) {
+            VARIANT vPropName, vValue;
+            VariantInit(&vPropName);
+            VariantInit(&vValue);
+
+            vPropName.vt = VT_BSTR;
+            vPropName.bstrVal = SysAllocString(prop.first.c_str());
+            vValue.vt = VT_I4;
+            vValue.lVal = prop.second;
+
+            VARIANT args[2] = { vValue, vPropName };
+            DISPID putid = DISPID_PROPERTYPUT;
+            DISPPARAMS itemParams = { args, &putid, 2, 1 };
+
+            pParaShape->Invoke(dispidItem, IID_NULL, LOCALE_USER_DEFAULT,
+                                DISPATCH_PROPERTYPUT, &itemParams, NULL, NULL, NULL);
+
+            SysFreeString(vPropName.bstrVal);
+        }
+    }
+
+    // 4. HAction.Execute 호출
+    bool success = false;
+    DISPID dispidExecute;
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispidExecute);
+    if (SUCCEEDED(hr)) {
+        VARIANT args[2];
+        VariantInit(&args[0]);
+        VariantInit(&args[1]);
+        args[0].vt = VT_DISPATCH;
+        args[0].pdispVal = pHSet;
+        args[1].vt = VT_BSTR;
+        args[1].bstrVal = SysAllocString(L"ParaShape");
+
+        DISPPARAMS params = { args, NULL, 2, 0 };
+        VARIANT vResult;
+        VariantInit(&vResult);
+
+        hr = pHAction->Invoke(dispidExecute, IID_NULL, LOCALE_USER_DEFAULT,
+                               DISPATCH_METHOD, &params, &vResult, NULL, NULL);
+        if (SUCCEEDED(hr) && vResult.vt == VT_BOOL) {
+            success = (vResult.boolVal != VARIANT_FALSE);
+        } else if (SUCCEEDED(hr)) {
+            success = true;
+        }
+
+        SysFreeString(args[1].bstrVal);
+        VariantClear(&vResult);
+    }
+
+    pHSet->Release();
+    pParaShape->Release();
+
+    return success;
+}
+
+bool HwpWrapper::SetPara(int align_type,
+                          int line_spacing,
+                          int left_margin,
+                          int indentation)
+{
+    std::map<std::wstring, int> props;
+
+    if (align_type >= 0) {
+        props[L"AlignType"] = align_type;
+    }
+    if (line_spacing >= 0) {
+        props[L"LineSpacing"] = line_spacing;
+    }
+    if (left_margin >= 0) {
+        props[L"LeftMargin"] = left_margin;
+    }
+    if (indentation >= 0) {
+        props[L"Indentation"] = indentation;
+    }
+
+    if (props.empty()) {
+        return true;  // 변경할 내용 없음
+    }
+
+    return SetParaShape(props);
 }
 
 } // namespace cpyhwpx

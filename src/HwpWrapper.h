@@ -470,6 +470,37 @@ public:
     int SetMessageBoxMode(int mode);
 
     //=========================================================================
+    // 유틸리티
+    //=========================================================================
+
+    /**
+     * @brief 키 인디케이터 (상태 표시줄 정보)
+     * @return (성공여부, 구역수, 구역번호, 인쇄페이지, 단번호, 줄번호, 위치, 삽입/수정, 컨트롤명)
+     */
+    std::tuple<int, int, int, int, int, int, int, int, std::wstring> KeyIndicator();
+
+    /**
+     * @brief 페이지로 이동
+     * @param pageIndex 페이지 번호 (1-based)
+     * @return (현재 인쇄 페이지, 현재 페이지)
+     */
+    std::pair<int, int> GotoPage(int pageIndex);
+
+    /**
+     * @brief 밀리미터를 HWP 단위로 변환
+     * @param mili 밀리미터 값
+     * @return HWP 단위 값
+     */
+    int MiliToHwpUnit(double mili);
+
+    /**
+     * @brief HWP 단위를 밀리미터로 변환
+     * @param hwpUnit HWP 단위 값
+     * @return 밀리미터 값
+     */
+    static double HwpUnitToMili(int hwpUnit);
+
+    //=========================================================================
     // 문서 상태
     //=========================================================================
 
@@ -523,6 +554,206 @@ public:
                    const std::wstring& replace_text,
                    bool match_case = false,
                    bool regex = false);
+
+    /**
+     * @brief 아래 방향으로 텍스트 찾기
+     * @param src 찾을 텍스트
+     * @param regex 정규식 사용 여부
+     * @return 찾으면 true, 없으면 false
+     */
+    bool FindForward(const std::wstring& src, bool regex = false);
+
+    /**
+     * @brief 위 방향으로 텍스트 찾기
+     * @param src 찾을 텍스트
+     * @param regex 정규식 사용 여부
+     * @return 찾으면 true, 없으면 false
+     */
+    bool FindBackward(const std::wstring& src, bool regex = false);
+
+    /**
+     * @brief 찾아 바꾸기 (방향 지정)
+     * @param src 찾을 텍스트
+     * @param dst 바꿀 텍스트
+     * @param regex 정규식 사용 여부
+     * @param direction 방향 (0=Forward, 1=Backward, 2=AllDoc)
+     * @return 바꾼 개수
+     */
+    int FindReplace(const std::wstring& src,
+                    const std::wstring& dst,
+                    bool regex = false,
+                    int direction = 0);
+
+    /**
+     * @brief 붙여넣기 (확장)
+     * @param option 옵션 (0=왼쪽, 1=오른쪽, 2=위, 3=아래, 4=덮어쓰기, 5=내용만, 6=셀안에표)
+     * @return 성공 여부
+     */
+    bool Paste(int option = 4);
+
+    //=========================================================================
+    // 파일 I/O 확장
+    //=========================================================================
+
+    /**
+     * @brief 스타일 내보내기
+     * @param styFilepath STY 파일 경로
+     * @return 성공 여부
+     */
+    bool ExportStyle(const std::wstring& styFilepath);
+
+    /**
+     * @brief 스타일 가져오기
+     * @param styFilepath STY 파일 경로
+     * @return 성공 여부
+     */
+    bool ImportStyle(const std::wstring& styFilepath);
+
+    /**
+     * @brief 명령 잠금/해제
+     * @param actId 액션 ID (예: "Undo", "Redo")
+     * @param isLock true=잠금, false=해제
+     */
+    void LockCommand(const std::wstring& actId, bool isLock);
+
+    /**
+     * @brief 페이지 이미지 생성
+     * @param path 이미지 파일 경로
+     * @param pgno 페이지 번호 (1부터 시작, 0=현재 페이지)
+     * @param resolution DPI (기본 300)
+     * @param depth Color Depth (1, 4, 8, 24)
+     * @param format 포맷 ("bmp", "gif")
+     * @return 성공 여부
+     */
+    bool CreatePageImage(const std::wstring& path,
+                         int pgno = 0,
+                         int resolution = 300,
+                         int depth = 24,
+                         const std::wstring& format = L"bmp");
+
+    /**
+     * @brief 문서 인쇄
+     * @return 성공 여부
+     */
+    bool PrintDocument();
+
+    /**
+     * @brief 메일 머지 실행
+     * @return 성공 여부
+     */
+    bool MailMerge();
+
+    //=========================================================================
+    // 텍스트 편집 확장
+    //=========================================================================
+
+    /**
+     * @brief 현재 캐럿 위치에 문서 삽입
+     * @param path 삽입할 파일 경로
+     * @param format 파일 형식 (빈 문자열=자동 감지)
+     * @param arg 추가 인자
+     * @param moveDocEnd 삽입 후 문서 끝으로 이동
+     * @return 성공 여부
+     */
+    bool Insert(const std::wstring& path,
+                const std::wstring& format = L"",
+                const std::wstring& arg = L"",
+                bool moveDocEnd = false);
+
+    /**
+     * @brief 표 셀에 배경 이미지 삽입
+     * @param path 이미지 파일 경로
+     * @param borderType "SelectedCell" 또는 "SelectedCellDelete"
+     * @param embedded 문서에 포함 여부
+     * @param fillOption 채우기 옵션 (0=바둑판식, 1=가로확대, 2=세로확대, 3=확대, 4=축소, 5=중앙)
+     * @param effect 효과 (0=없음, 1=그레이스케일, 2=흑백)
+     * @param watermark 워터마크 여부
+     * @param brightness 밝기 (-100~100)
+     * @param contrast 대비 (-100~100)
+     * @return 성공 여부
+     */
+    bool InsertBackgroundPicture(const std::wstring& path,
+                                  const std::wstring& borderType = L"SelectedCell",
+                                  bool embedded = true,
+                                  int fillOption = 5,
+                                  int effect = 0,
+                                  bool watermark = false,
+                                  int brightness = 0,
+                                  int contrast = 0);
+
+    /**
+     * @brief 메타태그로 캐럿 이동
+     * @param tag 메타태그 이름
+     * @param text 찾을 텍스트 (빈 문자열=첫 번째)
+     * @param start 시작 위치로 이동
+     * @param select 선택 여부
+     * @return 성공 여부
+     */
+    bool MoveToMetatag(const std::wstring& tag,
+                       const std::wstring& text = L"",
+                       bool start = true,
+                       bool select = false);
+
+    /**
+     * @brief 모든 필드의 텍스트 지우기
+     */
+    void ClearFieldText();
+
+    /**
+     * @brief 하이퍼링크 삽입
+     * @param hypertext 링크 대상 (URL 또는 북마크)
+     * @param description 링크 설명
+     * @return 성공 여부
+     */
+    bool InsertHyperlink(const std::wstring& hypertext,
+                         const std::wstring& description = L"");
+
+    /**
+     * @brief 메모 삽입
+     * @param text 메모 내용
+     * @param memoType 메모 유형 ("memo" 또는 "revision")
+     */
+    void InsertMemo(const std::wstring& text = L"",
+                    const std::wstring& memoType = L"memo");
+
+    /**
+     * @brief 원문자/글자 겹치기 삽입
+     * @param chars 겹칠 문자열
+     * @param charSize 글자 크기 (-3~3, 음수=작게, 양수=크게)
+     * @param checkCompose 합성 방식 (0=원문자, 1=겹치기)
+     * @param circleType 테두리 유형 (0=원, 1=사각형 등)
+     * @return 성공 여부
+     */
+    bool ComposeChars(const std::wstring& chars = L"",
+                      int charSize = -3,
+                      int checkCompose = 0,
+                      int circleType = 0);
+
+    /**
+     * @brief 컨트롤로 캐럿 이동
+     * @param pCtrl 컨트롤 객체
+     * @param option 위치 옵션 (0=시작, 1=끝, 2=중간)
+     * @return 성공 여부
+     */
+    bool MoveToCtrl(IDispatch* pCtrl, int option = 0);
+
+    /**
+     * @brief 컨트롤 선택
+     * @param pCtrl 컨트롤 객체
+     * @param anchorType 앵커 타입 (0=시작, 1=끝, 2=전체)
+     * @param option 선택 옵션 (1=기본)
+     * @return 성공 여부
+     */
+    bool SelectCtrl(IDispatch* pCtrl, int anchorType = 0, int option = 1);
+
+    /**
+     * @brief 모든 캡션 위치 일괄 변경
+     * @param location 위치 ("Top", "Bottom", "Left", "Right")
+     * @param align 정렬 ("Left", "Center", "Right", "Justify")
+     * @return 성공 여부
+     */
+    bool MoveAllCaption(const std::wstring& location = L"Bottom",
+                        const std::wstring& align = L"Justify");
 
     //=========================================================================
     // 필드 작업
@@ -636,6 +867,86 @@ public:
      * @return 필드명:텍스트 맵
      */
     std::map<std::wstring, std::wstring> FieldsToMap();
+
+    //=========================================================================
+    // 필드/메타태그 확장
+    //=========================================================================
+
+    /**
+     * @brief 필드 속성 수정
+     * @param field 필드 이름
+     * @param remove 속성 제거 여부
+     * @param add 속성 추가 여부
+     * @return 성공 여부
+     */
+    bool ModifyFieldProperties(const std::wstring& field, bool remove, bool add);
+
+    /**
+     * @brief 개인정보 찾기
+     * @param privateType 개인정보 유형
+     * @param privateString 검색 문자열
+     * @return 결과 (-1=끝, 0=없음, 비트마스크=유형)
+     */
+    int FindPrivateInfo(int privateType, const std::wstring& privateString);
+
+    /**
+     * @brief 현재 메타태그명 조회
+     * @return 메타태그 이름 (없으면 빈 문자열)
+     */
+    std::wstring GetCurMetatagName();
+
+    /**
+     * @brief 메타태그 목록 조회
+     * @param number 0=plain, 1=numbered
+     * @param option 옵션
+     * @return 메타태그 목록 (0x02로 구분)
+     */
+    std::wstring GetMetatagList(int number, int option);
+
+    /**
+     * @brief 메타태그 텍스트 조회
+     * @param tag 메타태그 이름
+     * @return 메타태그 텍스트
+     */
+    std::wstring GetMetatagNameText(const std::wstring& tag);
+
+    /**
+     * @brief 메타태그 텍스트 설정
+     * @param tag 메타태그 이름
+     * @param text 설정할 텍스트
+     * @return 성공 여부
+     */
+    bool PutMetatagNameText(const std::wstring& tag, const std::wstring& text);
+
+    /**
+     * @brief 메타태그 이름 변경
+     * @param oldtag 기존 이름
+     * @param newtag 새 이름
+     * @return 성공 여부
+     */
+    bool RenameMetatag(const std::wstring& oldtag, const std::wstring& newtag);
+
+    /**
+     * @brief 메타태그 속성 수정
+     * @param tag 메타태그 이름
+     * @param remove 속성 제거 여부
+     * @param add 속성 추가 여부
+     * @return 성공 여부
+     */
+    bool ModifyMetatagProperties(const std::wstring& tag, bool remove, bool add);
+
+    /**
+     * @brief 필드 정보 리스트 (HWPML2X 파싱)
+     * @return 필드 정보 목록 [{name, direction, memo}, ...]
+     */
+    std::vector<std::map<std::wstring, std::wstring>> GetFieldInfo();
+
+    /**
+     * @brief 중괄호 구문을 필드로 변환
+     * {{name:direction:memo}} → 누름틀
+     * [[name:direction:memo]] → 셀 필드
+     */
+    void SetFieldByBracket();
 
     //=========================================================================
     // 테이블 작업
@@ -1129,10 +1440,150 @@ public:
      */
     IDispatch* GetHAction();
 
+    //=========================================================================
+    // 파라미터 헬퍼 (Parameter Helpers)
+    // pyhwpx param_helpers.py 포팅
+    //=========================================================================
+
+    // === 정렬 관련 ===
+    int HAlign(const std::wstring& h_align);
+    int VAlign(const std::wstring& v_align);
+    int TextAlign(const std::wstring& text_align);
+    int ParaHeadAlign(const std::wstring& para_head_align);
+    int TextArtAlign(const std::wstring& text_art_align);
+
+    // === 선/테두리 관련 ===
+    int HwpLineType(const std::wstring& line_type);
+    int HwpLineWidth(const std::wstring& line_width);
+    int BorderShape(const std::wstring& border_type);
+    int EndStyle(const std::wstring& end_style);
+    int EndSize(const std::wstring& end_size);
+
+    // === 서식 관련 ===
+    int NumberFormat(const std::wstring& num_format);
+    int HeadType(const std::wstring& heading_type);
+    int FontType(const std::wstring& font_type);
+    int StrikeOut(const std::wstring& strike_out_type);
+    int HwpUnderlineType(const std::wstring& underline_type);
+    int HwpUnderlineShape(const std::wstring& underline_shape);
+    int StyleType(const std::wstring& style_type);
+
+    // === 검색/효과 ===
+    int FindDir(const std::wstring& find_dir);
+    int PicEffect(const std::wstring& pic_effect);
+    int HwpZoomType(const std::wstring& zoom_type);
+
+    // === 페이지/인쇄 ===
+    int PageNumPosition(const std::wstring& pagenum_pos);
+    int PageType(const std::wstring& page_type);
+    int PrintRange(const std::wstring& print_range);
+    int PrintType(const std::wstring& print_method);
+    int PrintDevice(const std::wstring& print_device);
+    int PrintPaper(const std::wstring& print_paper);
+    int SideType(const std::wstring& side_type);
+
+    // === 채우기/그라데이션 ===
+    int BrushType(const std::wstring& brush_type);
+    int FillAreaType(const std::wstring& fill_area);
+    int Gradation(const std::wstring& gradation);
+    int HatchStyle(const std::wstring& hatch_style);
+    int WatermarkBrush(const std::wstring& watermark_brush);
+
+    // === 표 관련 ===
+    int TableFormat(const std::wstring& table_format);
+    int TableBreak(const std::wstring& page_break);
+    int TableTarget(const std::wstring& table_target);
+    int TableSwapType(const std::wstring& tableswap);
+    int CellApply(const std::wstring& cell_apply);
+    int GridMethod(const std::wstring& grid_method);
+    int GridViewLine(const std::wstring& grid_view_line);
+
+    // === 텍스트 흐름/배치 ===
+    int TextDir(const std::wstring& text_direction);
+    int TextWrapType(const std::wstring& text_wrap);
+    int TextFlowType(const std::wstring& text_flow);
+    int LineWrapType(const std::wstring& line_wrap);
+    int LineSpacingMethod(const std::wstring& line_spacing);
+
+    // === 도형/이미지 ===
+    int ArcType(const std::wstring& arc_type);
+    int DrawAspect(const std::wstring& draw_aspect);
+    int DrawFillImage(const std::wstring& fillimage);
+    int DrawShadowType(const std::wstring& shadow_type);
+    int CharShadowType(const std::wstring& shadow_type);
+    int ImageFormat(const std::wstring& image_format);
+    int PlacementType(const std::wstring& restart);
+
+    // === 위치/크기 관련 ===
+    int HorzRel(const std::wstring& horz_rel);
+    int VertRel(const std::wstring& vert_rel);
+    int HeightRel(const std::wstring& height_rel);
+    int WidthRel(const std::wstring& width_rel);
+
+    // === 개요/번호 ===
+    int AutoNumType(const std::wstring& autonum);
+    int Numbering(const std::wstring& numbering);
+    int HwpOutlineStyle(const std::wstring& hwp_outline_style);
+    int HwpOutlineType(const std::wstring& hwp_outline_type);
+
+    // === 열/단 정의 ===
+    int ColDefType(const std::wstring& col_def_type);
+    int ColLayoutType(const std::wstring& col_layout_type);
+    int GutterMethod(const std::wstring& gutter_type);
+
+    // === 기타 옵션 ===
+    int BreakWordLatin(const std::wstring& break_latin_word);
+    int Canonical(const std::wstring& canonical);
+    int ConvertPUAHangulToUnicode(bool reverse);
+    int CrookedSlash(const std::wstring& crooked_slash);
+    int DbfCodeType(const std::wstring& dbf_code);
+    int Delimiter(const std::wstring& delimiter);
+    int DSMark(const std::wstring& diac_sym_mark);
+    int Encrypt(const std::wstring& encrypt);
+    int Handler(const std::wstring& handler);
+    int Hash(const std::wstring& hash);
+    int Hiding(const std::wstring& hiding);
+    int MacroState(const std::wstring& macro_state);
+    int MailType(const std::wstring& mail_type);
+    int PresentEffect(const std::wstring& prsnteffect);
+    int Signature(const std::wstring& signature);
+    int Slash(const std::wstring& slash);
+    int SortDelimiter(const std::wstring& sort_delimiter);
+    int SubtPos(const std::wstring& subt_pos);
+    int ViewFlag(const std::wstring& view_flag);
+
+    // === 사용자 정보 ===
+    std::wstring GetUserInfo(const std::wstring& user_info_id);
+    bool SetUserInfo(const std::wstring& user_info_id, const std::wstring& value);
+
+    // === 메타태그/DRM ===
+    bool SetCurMetatagName(const std::wstring& tag);
+    bool SetDRMAuthority(const std::wstring& authority);
+
+    // === 번역 ===
+    std::vector<std::wstring> GetTranslateLangList(const std::wstring& cur_lang);
+
+    // === 음력/양력 변환 ===
+    std::tuple<int, int, int> LunarToSolarBySet(int l_year, int l_month, int l_day, bool l_leap);
+    std::tuple<int, int, int, bool> SolarToLunarBySet(int s_year, int s_month, int s_day);
+
+    // === 단위 변환 확장 ===
+    double HwpUnitToInch(int hwp_unit);
+    double HwpUnitToPoint(int hwp_unit);
+    int PointToHwpUnit(double point);
+
 protected:
     //=========================================================================
     // COM 헬퍼 메서드
     //=========================================================================
+
+    /**
+     * @brief 파라미터 헬퍼 공통 호출 (문자열 파라미터 1개)
+     * @param method 메서드 이름
+     * @param param 파라미터 값
+     * @return 결과 정수값
+     */
+    int InvokeParamHelper(const std::wstring& method, const std::wstring& param);
 
     /**
      * @brief Active_XHwpWindow에서 WindowHandle 획득

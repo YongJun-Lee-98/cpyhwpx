@@ -678,6 +678,135 @@ public:
     static bool HanThDIC(HwpWrapper* hwp);
     static bool HwpDic(HwpWrapper* hwp);
     static bool ReturnKeyInField(HwpWrapper* hwp);
+
+    //=========================================================================
+    // 추가 Run 액션들 (228개 신규)
+    //=========================================================================
+
+    // Auto - AutoSpellSelect (17개)
+    static bool AutoSpellSelect0(HwpWrapper* hwp);
+    static bool AutoSpellSelect1(HwpWrapper* hwp);
+    static bool AutoSpellSelect2(HwpWrapper* hwp);
+    static bool AutoSpellSelect3(HwpWrapper* hwp);
+    static bool AutoSpellSelect4(HwpWrapper* hwp);
+    static bool AutoSpellSelect5(HwpWrapper* hwp);
+    static bool AutoSpellSelect6(HwpWrapper* hwp);
+    static bool AutoSpellSelect7(HwpWrapper* hwp);
+    static bool AutoSpellSelect8(HwpWrapper* hwp);
+    static bool AutoSpellSelect9(HwpWrapper* hwp);
+    static bool AutoSpellSelect10(HwpWrapper* hwp);
+    static bool AutoSpellSelect11(HwpWrapper* hwp);
+    static bool AutoSpellSelect12(HwpWrapper* hwp);
+    static bool AutoSpellSelect13(HwpWrapper* hwp);
+    static bool AutoSpellSelect14(HwpWrapper* hwp);
+    static bool AutoSpellSelect15(HwpWrapper* hwp);
+    static bool AutoSpellSelect16(HwpWrapper* hwp);
+
+    // ViewOption (14개)
+    static bool ViewIdiom(HwpWrapper* hwp);
+    static bool ViewOptionMemoGuideline(HwpWrapper* hwp);
+    static bool ViewOptionRevision(HwpWrapper* hwp);
+    static bool ViewOptionTrackChange(HwpWrapper* hwp);
+    static bool ViewOptionTrackChangeFinal(HwpWrapper* hwp);
+    static bool ViewOptionTrackChangeFinalMemo(HwpWrapper* hwp);
+    static bool ViewOptionTrackChangeInline(HwpWrapper* hwp);
+    static bool ViewOptionTrackChangeInsertDelete(HwpWrapper* hwp);
+    static bool ViewOptionTrackChangeOriginal(HwpWrapper* hwp);
+    static bool ViewOptionTrackChangeOriginalMemo(HwpWrapper* hwp);
+    static bool ViewOptionTrackChangeShape(HwpWrapper* hwp);
+    static bool ViewOptionTrackChnageInfo(HwpWrapper* hwp);
+    static bool ViewZoomNormal(HwpWrapper* hwp);
+    static bool ViewZoomRibon(HwpWrapper* hwp);
+
+    // Macro (22개)
+    static bool MacroPlay1(HwpWrapper* hwp);
+    static bool MacroPlay2(HwpWrapper* hwp);
+    static bool MacroPlay3(HwpWrapper* hwp);
+    static bool MacroPlay4(HwpWrapper* hwp);
+    static bool MacroPlay5(HwpWrapper* hwp);
+    static bool MacroPlay6(HwpWrapper* hwp);
+    static bool MacroPlay7(HwpWrapper* hwp);
+    static bool MacroPlay8(HwpWrapper* hwp);
+    static bool MacroPlay9(HwpWrapper* hwp);
+    static bool MacroPlay10(HwpWrapper* hwp);
+    static bool MacroPlay11(HwpWrapper* hwp);
+    static bool ScrMacroPause(HwpWrapper* hwp);
+    static bool ScrMacroRepeat(HwpWrapper* hwp);
+    static bool ScrMacroStop(HwpWrapper* hwp);
+    static bool ScrMacroPlay1(HwpWrapper* hwp);
+    static bool ScrMacroPlay2(HwpWrapper* hwp);
+    static bool ScrMacroPlay3(HwpWrapper* hwp);
+    static bool ScrMacroPlay4(HwpWrapper* hwp);
+    static bool ScrMacroPlay5(HwpWrapper* hwp);
+    static bool ScrMacroPlay6(HwpWrapper* hwp);
+    static bool ScrMacroPlay7(HwpWrapper* hwp);
+    static bool ScrMacroPlay8(HwpWrapper* hwp);
+
+    // Quick (21개)
+    static bool QuickCorrectSound(HwpWrapper* hwp);
+    static bool QuickMarkInsert0(HwpWrapper* hwp);
+    static bool QuickMarkInsert1(HwpWrapper* hwp);
+    static bool QuickMarkInsert2(HwpWrapper* hwp);
+    static bool QuickMarkInsert3(HwpWrapper* hwp);
+    static bool QuickMarkInsert4(HwpWrapper* hwp);
+    static bool QuickMarkInsert5(HwpWrapper* hwp);
+    static bool QuickMarkInsert6(HwpWrapper* hwp);
+    static bool QuickMarkInsert7(HwpWrapper* hwp);
+    static bool QuickMarkInsert8(HwpWrapper* hwp);
+    static bool QuickMarkInsert9(HwpWrapper* hwp);
+    static bool QuickMarkMove0(HwpWrapper* hwp);
+    static bool QuickMarkMove1(HwpWrapper* hwp);
+    static bool QuickMarkMove2(HwpWrapper* hwp);
+    static bool QuickMarkMove3(HwpWrapper* hwp);
+    static bool QuickMarkMove4(HwpWrapper* hwp);
+    static bool QuickMarkMove5(HwpWrapper* hwp);
+    static bool QuickMarkMove6(HwpWrapper* hwp);
+    static bool QuickMarkMove7(HwpWrapper* hwp);
+    static bool QuickMarkMove8(HwpWrapper* hwp);
+    static bool QuickMarkMove9(HwpWrapper* hwp);
+
+    // MasterPage (5개)
+    static bool MasterPagePrevSection(HwpWrapper* hwp);
+    static bool MasterPageType(HwpWrapper* hwp);
+    static bool MPSectionToNext(HwpWrapper* hwp);
+    static bool MPSectionToPrevious(HwpWrapper* hwp);
+    static bool MPShowMarginBorder(HwpWrapper* hwp);
+
+    // Picture (8개)
+    static bool PictureEffect1(HwpWrapper* hwp);
+    static bool PictureEffect2(HwpWrapper* hwp);
+    static bool PictureEffect3(HwpWrapper* hwp);
+    static bool PictureEffect4(HwpWrapper* hwp);
+    static bool PictureEffect5(HwpWrapper* hwp);
+    static bool PictureEffect6(HwpWrapper* hwp);
+    static bool PictureEffect7(HwpWrapper* hwp);
+    static bool PictureEffect8(HwpWrapper* hwp);
+
+    // Note/Memo (8개)
+    static bool NoteNumProperty(HwpWrapper* hwp);
+    static bool NoteNumShape(HwpWrapper* hwp);
+    static bool NoteLineColor(HwpWrapper* hwp);
+    static bool NoteLineLength(HwpWrapper* hwp);
+    static bool NoteLineShape(HwpWrapper* hwp);
+    static bool NoteLineWeight(HwpWrapper* hwp);
+    static bool NotePosition(HwpWrapper* hwp);
+    static bool EditFieldMemo(HwpWrapper* hwp);
+
+    // FormObj (2개)
+    static bool FormObjCreatorScrollBar(HwpWrapper* hwp);
+    static bool FormObjRadioGroup(HwpWrapper* hwp);
+
+    // Window/Frame (5개)
+    static bool FrameViewZoomRibon(HwpWrapper* hwp);
+    static bool SplitMemo(HwpWrapper* hwp);
+    static bool SplitMemoClose(HwpWrapper* hwp);
+    static bool SplitMemoOpen(HwpWrapper* hwp);
+    static bool SplitMainActive(HwpWrapper* hwp);
+
+    // Misc 추가 (기타)
+    static bool Jajun(HwpWrapper* hwp);
+    static bool ChangeSkin(HwpWrapper* hwp);
+    static bool SoftKeyboard(HwpWrapper* hwp);
 };
 
 } // namespace cpyhwpx

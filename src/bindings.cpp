@@ -240,6 +240,29 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("filename"),
              "파일 정보 조회 (Format, VersionStr, VersionNum, Encrypted)")
 
+        // 파일 I/O 확장
+        .def("export_style", &cpyhwpx::HwpWrapper::ExportStyle,
+             py::arg("sty_filepath"),
+             "스타일 내보내기 (.sty 파일)")
+        .def("import_style", &cpyhwpx::HwpWrapper::ImportStyle,
+             py::arg("sty_filepath"),
+             "스타일 가져오기 (.sty 파일)")
+        .def("lock_command", &cpyhwpx::HwpWrapper::LockCommand,
+             py::arg("act_id"),
+             py::arg("is_lock"),
+             "명령 잠금/해제 (예: 'Undo', 'Redo')")
+        .def("create_page_image", &cpyhwpx::HwpWrapper::CreatePageImage,
+             py::arg("path"),
+             py::arg("pgno") = 0,
+             py::arg("resolution") = 300,
+             py::arg("depth") = 24,
+             py::arg("format") = L"bmp",
+             "페이지 이미지 생성 (pgno: 0=현재, 1~n=해당 페이지)")
+        .def("print_document", &cpyhwpx::HwpWrapper::PrintDocument,
+             "문서 인쇄 다이얼로그")
+        .def("mail_merge", &cpyhwpx::HwpWrapper::MailMerge,
+             "메일 머지 실행")
+
         // 텍스트 편집
         .def("insert_text", &cpyhwpx::HwpWrapper::InsertText,
              py::arg("text"),
@@ -292,6 +315,257 @@ PYBIND11_MODULE(cpyhwpx, m) {
              "창 최대화")
         .def("minimize_window", &cpyhwpx::HwpWrapper::MinimizeWindow,
              "창 최소화")
+        .def("set_viewstate", &cpyhwpx::HwpWrapper::SetViewState,
+             py::arg("flag"),
+             "뷰 상태 설정 (0=조판부호, 1=쪽머리메모, 2=그림, 3=숨긴글, 4=쪽맞춤, 5=문단부호, 6=줄표시)")
+        .def("get_viewstate", &cpyhwpx::HwpWrapper::GetViewState,
+             "뷰 상태 가져오기")
+        .def("msgbox", &cpyhwpx::HwpWrapper::MsgBox,
+             py::arg("message"),
+             py::arg("flag") = 0,
+             "메시지 박스 표시 (flag: MB_* 상수)")
+        .def("get_message_box_mode", &cpyhwpx::HwpWrapper::GetMessageBoxMode,
+             "메시지 박스 모드 가져오기")
+        .def("set_message_box_mode", &cpyhwpx::HwpWrapper::SetMessageBoxMode,
+             py::arg("mode"),
+             "메시지 박스 모드 설정 (0=다이얼로그, 1=확인무시, 2=오류반환)")
+
+        // 유틸리티
+        .def("key_indicator", &cpyhwpx::HwpWrapper::KeyIndicator,
+             "키 인디케이터 (suc, seccnt, secno, prnpageno, colno, line, pos, over, ctrlname)")
+        .def("goto_page", &cpyhwpx::HwpWrapper::GotoPage,
+             py::arg("page_index"),
+             "페이지로 이동 (1-based), 반환: (인쇄페이지, 현재페이지)")
+        .def("mili_to_hwp_unit", &cpyhwpx::HwpWrapper::MiliToHwpUnit,
+             py::arg("mili"),
+             "밀리미터를 HWP 단위로 변환")
+        .def_static("hwp_unit_to_mili", &cpyhwpx::HwpWrapper::HwpUnitToMili,
+             py::arg("hwp_unit"),
+             "HWP 단위를 밀리미터로 변환 (정적 메서드)")
+
+        //=========================================================================
+        // 파라미터 헬퍼 (Parameter Helpers)
+        //=========================================================================
+
+        // 정렬 관련
+        .def("h_align", &cpyhwpx::HwpWrapper::HAlign,
+             py::arg("h_align"), "수평 정렬 (Left, Center, Right, Justify)")
+        .def("v_align", &cpyhwpx::HwpWrapper::VAlign,
+             py::arg("v_align"), "수직 정렬 (Top, Center, Bottom)")
+        .def("text_align", &cpyhwpx::HwpWrapper::TextAlign,
+             py::arg("text_align"), "텍스트 정렬")
+        .def("para_head_align", &cpyhwpx::HwpWrapper::ParaHeadAlign,
+             py::arg("para_head_align"), "문단 머리 정렬")
+        .def("text_art_align", &cpyhwpx::HwpWrapper::TextArtAlign,
+             py::arg("text_art_align"), "글맵시 정렬")
+
+        // 선/테두리 관련
+        .def("hwp_line_type", &cpyhwpx::HwpWrapper::HwpLineType,
+             py::arg("line_type"), "선 종류 (Solid, Dash, Dot, DashDot, etc.)")
+        .def("hwp_line_width", &cpyhwpx::HwpWrapper::HwpLineWidth,
+             py::arg("line_width"), "선 두께 (0.1mm, 0.12mm, 0.15mm, etc.)")
+        .def("border_shape", &cpyhwpx::HwpWrapper::BorderShape,
+             py::arg("border_type"), "테두리 모양")
+        .def("end_style", &cpyhwpx::HwpWrapper::EndStyle,
+             py::arg("end_style"), "끝 스타일")
+        .def("end_size", &cpyhwpx::HwpWrapper::EndSize,
+             py::arg("end_size"), "끝 크기")
+
+        // 서식 관련
+        .def("number_format", &cpyhwpx::HwpWrapper::NumberFormat,
+             py::arg("num_format"), "번호 형식")
+        .def("head_type", &cpyhwpx::HwpWrapper::HeadType,
+             py::arg("heading_type"), "머리말 유형")
+        .def("font_type", &cpyhwpx::HwpWrapper::FontType,
+             py::arg("font_type"), "글꼴 유형")
+        .def("strike_out", &cpyhwpx::HwpWrapper::StrikeOut,
+             py::arg("strike_out_type"), "취소선 유형")
+        .def("hwp_underline_type", &cpyhwpx::HwpWrapper::HwpUnderlineType,
+             py::arg("underline_type"), "밑줄 유형")
+        .def("hwp_underline_shape", &cpyhwpx::HwpWrapper::HwpUnderlineShape,
+             py::arg("underline_shape"), "밑줄 모양")
+        .def("style_type", &cpyhwpx::HwpWrapper::StyleType,
+             py::arg("style_type"), "스타일 유형")
+
+        // 검색/효과
+        .def("find_dir", &cpyhwpx::HwpWrapper::FindDir,
+             py::arg("find_dir"), "찾기 방향")
+        .def("pic_effect", &cpyhwpx::HwpWrapper::PicEffect,
+             py::arg("pic_effect"), "그림 효과")
+        .def("hwp_zoom_type", &cpyhwpx::HwpWrapper::HwpZoomType,
+             py::arg("zoom_type"), "줌 유형")
+
+        // 페이지/인쇄
+        .def("page_num_position", &cpyhwpx::HwpWrapper::PageNumPosition,
+             py::arg("pagenum_pos"), "페이지 번호 위치")
+        .def("page_type", &cpyhwpx::HwpWrapper::PageType,
+             py::arg("page_type"), "페이지 유형")
+        .def("print_range", &cpyhwpx::HwpWrapper::PrintRange,
+             py::arg("print_range"), "인쇄 범위")
+        .def("print_type", &cpyhwpx::HwpWrapper::PrintType,
+             py::arg("print_method"), "인쇄 방법")
+        .def("print_device", &cpyhwpx::HwpWrapper::PrintDevice,
+             py::arg("print_device"), "인쇄 장치")
+        .def("print_paper", &cpyhwpx::HwpWrapper::PrintPaper,
+             py::arg("print_paper"), "인쇄 용지")
+        .def("side_type", &cpyhwpx::HwpWrapper::SideType,
+             py::arg("side_type"), "측면 유형")
+
+        // 채우기/그라데이션
+        .def("brush_type", &cpyhwpx::HwpWrapper::BrushType,
+             py::arg("brush_type"), "브러시 유형")
+        .def("fill_area_type", &cpyhwpx::HwpWrapper::FillAreaType,
+             py::arg("fill_area"), "채우기 영역")
+        .def("gradation", &cpyhwpx::HwpWrapper::Gradation,
+             py::arg("gradation"), "그라데이션")
+        .def("hatch_style", &cpyhwpx::HwpWrapper::HatchStyle,
+             py::arg("hatch_style"), "해치 스타일")
+        .def("watermark_brush", &cpyhwpx::HwpWrapper::WatermarkBrush,
+             py::arg("watermark_brush"), "워터마크 브러시")
+
+        // 표 관련
+        .def("table_format", &cpyhwpx::HwpWrapper::TableFormat,
+             py::arg("table_format"), "표 형식")
+        .def("table_break", &cpyhwpx::HwpWrapper::TableBreak,
+             py::arg("page_break"), "표 나누기")
+        .def("table_target", &cpyhwpx::HwpWrapper::TableTarget,
+             py::arg("table_target"), "표 대상")
+        .def("table_swap_type", &cpyhwpx::HwpWrapper::TableSwapType,
+             py::arg("tableswap"), "표 교환 유형")
+        .def("cell_apply", &cpyhwpx::HwpWrapper::CellApply,
+             py::arg("cell_apply"), "셀 적용")
+        .def("grid_method", &cpyhwpx::HwpWrapper::GridMethod,
+             py::arg("grid_method"), "그리드 방법")
+        .def("grid_view_line", &cpyhwpx::HwpWrapper::GridViewLine,
+             py::arg("grid_view_line"), "그리드 보기 선")
+
+        // 텍스트 흐름/배치
+        .def("text_dir", &cpyhwpx::HwpWrapper::TextDir,
+             py::arg("text_direction"), "텍스트 방향")
+        .def("text_wrap_type", &cpyhwpx::HwpWrapper::TextWrapType,
+             py::arg("text_wrap"), "텍스트 감싸기")
+        .def("text_flow_type", &cpyhwpx::HwpWrapper::TextFlowType,
+             py::arg("text_flow"), "텍스트 흐름")
+        .def("line_wrap_type", &cpyhwpx::HwpWrapper::LineWrapType,
+             py::arg("line_wrap"), "줄 감싸기")
+        .def("line_spacing_method", &cpyhwpx::HwpWrapper::LineSpacingMethod,
+             py::arg("line_spacing"), "줄 간격 방법")
+
+        // 도형/이미지
+        .def("arc_type", &cpyhwpx::HwpWrapper::ArcType,
+             py::arg("arc_type"), "호 유형")
+        .def("draw_aspect", &cpyhwpx::HwpWrapper::DrawAspect,
+             py::arg("draw_aspect"), "그리기 종횡비")
+        .def("draw_fill_image", &cpyhwpx::HwpWrapper::DrawFillImage,
+             py::arg("fillimage"), "그리기 이미지 채우기")
+        .def("draw_shadow_type", &cpyhwpx::HwpWrapper::DrawShadowType,
+             py::arg("shadow_type"), "그리기 그림자 유형")
+        .def("char_shadow_type", &cpyhwpx::HwpWrapper::CharShadowType,
+             py::arg("shadow_type"), "글자 그림자 유형")
+        .def("image_format", &cpyhwpx::HwpWrapper::ImageFormat,
+             py::arg("image_format"), "이미지 형식")
+        .def("placement_type", &cpyhwpx::HwpWrapper::PlacementType,
+             py::arg("restart"), "배치 유형")
+
+        // 위치/크기 관련
+        .def("horz_rel", &cpyhwpx::HwpWrapper::HorzRel,
+             py::arg("horz_rel"), "수평 상대 위치")
+        .def("vert_rel", &cpyhwpx::HwpWrapper::VertRel,
+             py::arg("vert_rel"), "수직 상대 위치")
+        .def("height_rel", &cpyhwpx::HwpWrapper::HeightRel,
+             py::arg("height_rel"), "높이 상대 비율")
+        .def("width_rel", &cpyhwpx::HwpWrapper::WidthRel,
+             py::arg("width_rel"), "너비 상대 비율")
+
+        // 개요/번호
+        .def("auto_num_type", &cpyhwpx::HwpWrapper::AutoNumType,
+             py::arg("autonum"), "자동 번호 유형")
+        .def("numbering", &cpyhwpx::HwpWrapper::Numbering,
+             py::arg("numbering"), "번호 매기기")
+        .def("hwp_outline_style", &cpyhwpx::HwpWrapper::HwpOutlineStyle,
+             py::arg("hwp_outline_style"), "개요 스타일")
+        .def("hwp_outline_type", &cpyhwpx::HwpWrapper::HwpOutlineType,
+             py::arg("hwp_outline_type"), "개요 유형")
+
+        // 열/단 정의
+        .def("col_def_type", &cpyhwpx::HwpWrapper::ColDefType,
+             py::arg("col_def_type"), "열 정의 유형")
+        .def("col_layout_type", &cpyhwpx::HwpWrapper::ColLayoutType,
+             py::arg("col_layout_type"), "열 레이아웃 유형")
+        .def("gutter_method", &cpyhwpx::HwpWrapper::GutterMethod,
+             py::arg("gutter_type"), "거터 방법")
+
+        // 기타 옵션
+        .def("break_word_latin", &cpyhwpx::HwpWrapper::BreakWordLatin,
+             py::arg("break_latin_word"), "라틴어 단어 나누기")
+        .def("canonical", &cpyhwpx::HwpWrapper::Canonical,
+             py::arg("canonical"), "표준 형식")
+        .def("convert_pua_hangul_to_unicode", &cpyhwpx::HwpWrapper::ConvertPUAHangulToUnicode,
+             py::arg("reverse") = false, "PUA 한글을 유니코드로 변환")
+        .def("crooked_slash", &cpyhwpx::HwpWrapper::CrookedSlash,
+             py::arg("crooked_slash"), "비뚤어진 슬래시")
+        .def("dbf_code_type", &cpyhwpx::HwpWrapper::DbfCodeType,
+             py::arg("dbf_code"), "DBF 코드 유형")
+        .def("delimiter", &cpyhwpx::HwpWrapper::Delimiter,
+             py::arg("delimiter"), "구분 문자")
+        .def("ds_mark", &cpyhwpx::HwpWrapper::DSMark,
+             py::arg("diac_sym_mark"), "발음 기호 표시")
+        .def("encrypt", &cpyhwpx::HwpWrapper::Encrypt,
+             py::arg("encrypt"), "암호화")
+        .def("handler", &cpyhwpx::HwpWrapper::Handler,
+             py::arg("handler"), "핸들러")
+        .def("hash", &cpyhwpx::HwpWrapper::Hash,
+             py::arg("hash"), "해시")
+        .def("hiding", &cpyhwpx::HwpWrapper::Hiding,
+             py::arg("hiding"), "숨기기")
+        .def("macro_state", &cpyhwpx::HwpWrapper::MacroState,
+             py::arg("macro_state"), "매크로 상태")
+        .def("mail_type", &cpyhwpx::HwpWrapper::MailType,
+             py::arg("mail_type"), "메일 유형")
+        .def("present_effect", &cpyhwpx::HwpWrapper::PresentEffect,
+             py::arg("prsnteffect"), "프레젠테이션 효과")
+        .def("signature", &cpyhwpx::HwpWrapper::Signature,
+             py::arg("signature"), "서명")
+        .def("slash", &cpyhwpx::HwpWrapper::Slash,
+             py::arg("slash"), "슬래시")
+        .def("sort_delimiter", &cpyhwpx::HwpWrapper::SortDelimiter,
+             py::arg("sort_delimiter"), "정렬 구분자")
+        .def("subt_pos", &cpyhwpx::HwpWrapper::SubtPos,
+             py::arg("subt_pos"), "자막 위치")
+        .def("view_flag", &cpyhwpx::HwpWrapper::ViewFlag,
+             py::arg("view_flag"), "보기 플래그")
+
+        // 사용자 정보
+        .def("get_user_info", &cpyhwpx::HwpWrapper::GetUserInfo,
+             py::arg("user_info_id"), "사용자 정보 가져오기")
+        .def("set_user_info", &cpyhwpx::HwpWrapper::SetUserInfo,
+             py::arg("user_info_id"), py::arg("value"), "사용자 정보 설정")
+
+        // 메타태그/DRM
+        .def("set_cur_metatag_name", &cpyhwpx::HwpWrapper::SetCurMetatagName,
+             py::arg("tag"), "현재 메타태그 이름 설정")
+        .def("set_drm_authority", &cpyhwpx::HwpWrapper::SetDRMAuthority,
+             py::arg("authority"), "DRM 권한 설정")
+
+        // 번역
+        .def("get_translate_lang_list", &cpyhwpx::HwpWrapper::GetTranslateLangList,
+             py::arg("cur_lang"), "번역 언어 목록 가져오기")
+
+        // 음력/양력 변환
+        .def("lunar_to_solar_by_set", &cpyhwpx::HwpWrapper::LunarToSolarBySet,
+             py::arg("l_year"), py::arg("l_month"), py::arg("l_day"), py::arg("l_leap"),
+             "음력을 양력으로 변환 (year, month, day 튜플 반환)")
+        .def("solar_to_lunar_by_set", &cpyhwpx::HwpWrapper::SolarToLunarBySet,
+             py::arg("s_year"), py::arg("s_month"), py::arg("s_day"),
+             "양력을 음력으로 변환 (year, month, day, leap 튜플 반환)")
+
+        // 단위 변환 확장
+        .def("hwp_unit_to_inch", &cpyhwpx::HwpWrapper::HwpUnitToInch,
+             py::arg("hwp_unit"), "HWP 단위를 인치로 변환")
+        .def("hwp_unit_to_point", &cpyhwpx::HwpWrapper::HwpUnitToPoint,
+             py::arg("hwp_unit"), "HWP 단위를 포인트로 변환")
+        .def("point_to_hwp_unit", &cpyhwpx::HwpWrapper::PointToHwpUnit,
+             py::arg("point"), "포인트를 HWP 단위로 변환")
 
         // 문서 상태
         .def("is_empty", &cpyhwpx::HwpWrapper::IsEmpty,
@@ -322,6 +596,23 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("match_case") = false,
              py::arg("regex") = false,
              "모두 바꾸기")
+        .def("find_forward", &cpyhwpx::HwpWrapper::FindForward,
+             py::arg("src"),
+             py::arg("regex") = false,
+             "아래 방향으로 텍스트 찾기")
+        .def("find_backward", &cpyhwpx::HwpWrapper::FindBackward,
+             py::arg("src"),
+             py::arg("regex") = false,
+             "위 방향으로 텍스트 찾기")
+        .def("find_replace", &cpyhwpx::HwpWrapper::FindReplace,
+             py::arg("src"),
+             py::arg("dst"),
+             py::arg("regex") = false,
+             py::arg("direction") = 0,
+             "모두 찾아 바꾸기 (direction: 0=Forward, 1=Backward, 2=AllDoc)")
+        .def("paste", &cpyhwpx::HwpWrapper::Paste,
+             py::arg("option") = 4,
+             "붙여넣기 (option: 0=왼쪽, 1=오른쪽, 2=위, 3=아래, 4=덮어쓰기, 5=내용만, 6=셀안에표)")
 
         // HAction 관련
         .def("run", &cpyhwpx::HwpWrapper::RunAction,
@@ -402,6 +693,8 @@ PYBIND11_MODULE(cpyhwpx, m) {
         //=========================================================================
         .def_property_readonly("XHwpDocuments", &cpyhwpx::HwpWrapper::GetXHwpDocuments,
                                "문서 컬렉션")
+        .def_property_readonly("doc_list", &cpyhwpx::HwpWrapper::GetXHwpDocuments,
+                               "문서 컬렉션 (XHwpDocuments 별칭)")
         .def("switch_to", &cpyhwpx::HwpWrapper::SwitchTo,
              py::arg("num"),
              "문서 전환 (인덱스)")
@@ -561,7 +854,105 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("effect") = 0,
              py::arg("width") = 0,
              py::arg("height") = 0,
-             "이미지 삽입 (sizeoption: 0=원본, 1=지정크기, 2=셀맞춤, 3=셀맞춤+종횡비)");
+             "이미지 삽입 (sizeoption: 0=원본, 1=지정크기, 2=셀맞춤, 3=셀맞춤+종횡비)")
+
+        //=========================================================================
+        // 텍스트 편집 확장 (Text Editing Extended)
+        //=========================================================================
+        .def("insert", &cpyhwpx::HwpWrapper::Insert,
+             py::arg("path"),
+             py::arg("format") = L"",
+             py::arg("arg") = L"",
+             py::arg("move_doc_end") = false,
+             "파일 끼워넣기 (move_doc_end=True: 삽입 후 문서 끝으로 이동)")
+        .def("insert_background_picture", &cpyhwpx::HwpWrapper::InsertBackgroundPicture,
+             py::arg("path"),
+             py::arg("border_type") = L"SelectedCell",
+             py::arg("embedded") = true,
+             py::arg("fill_option") = 5,
+             py::arg("effect") = 0,
+             py::arg("watermark") = false,
+             py::arg("brightness") = 0,
+             py::arg("contrast") = 0,
+             "배경 그림 삽입 (border_type: SelectedCell, Page 등)")
+        .def("move_to_metatag", &cpyhwpx::HwpWrapper::MoveToMetatag,
+             py::arg("tag"),
+             py::arg("text") = L"",
+             py::arg("start") = true,
+             py::arg("select") = false,
+             "메타태그로 이동")
+        .def("clear_field_text", &cpyhwpx::HwpWrapper::ClearFieldText,
+             "모든 필드 텍스트 초기화")
+        .def("insert_hyperlink", &cpyhwpx::HwpWrapper::InsertHyperlink,
+             py::arg("hypertext"),
+             py::arg("description") = L"",
+             "하이퍼링크 삽입")
+        .def("insert_memo", &cpyhwpx::HwpWrapper::InsertMemo,
+             py::arg("text") = L"",
+             py::arg("memo_type") = L"memo",
+             "메모 삽입 (memo_type: 'memo' 또는 'revision')")
+        .def("compose_chars", &cpyhwpx::HwpWrapper::ComposeChars,
+             py::arg("chars") = L"",
+             py::arg("char_size") = -3,
+             py::arg("check_compose") = 0,
+             py::arg("circle_type") = 0,
+             "원 문자 조합")
+        .def("move_to_ctrl", [](cpyhwpx::HwpWrapper& self, cpyhwpx::HwpCtrl& ctrl, int option) {
+                 return self.MoveToCtrl(ctrl.GetDispatch(), option);
+             },
+             py::arg("ctrl"),
+             py::arg("option") = 0,
+             "컨트롤 위치로 이동")
+        .def("select_ctrl", [](cpyhwpx::HwpWrapper& self, cpyhwpx::HwpCtrl& ctrl, int anchor_type, int option) {
+                 return self.SelectCtrl(ctrl.GetDispatch(), anchor_type, option);
+             },
+             py::arg("ctrl"),
+             py::arg("anchor_type") = 0,
+             py::arg("option") = 1,
+             "컨트롤 선택")
+        .def("move_all_caption", &cpyhwpx::HwpWrapper::MoveAllCaption,
+             py::arg("location") = L"Bottom",
+             py::arg("align") = L"Justify",
+             "모든 캡션 위치 이동 (location: Top/Bottom/Left/Right)")
+
+        //=========================================================================
+        // 필드/메타태그 확장 (Field/Metatag Extended)
+        //=========================================================================
+        .def("modify_field_properties", &cpyhwpx::HwpWrapper::ModifyFieldProperties,
+             py::arg("field"),
+             py::arg("remove"),
+             py::arg("add"),
+             "필드 속성 수정")
+        .def("find_private_info", &cpyhwpx::HwpWrapper::FindPrivateInfo,
+             py::arg("private_type"),
+             py::arg("private_string"),
+             "개인정보 찾기 (-1=끝, 0=없음, 비트마스크=유형)")
+        .def("get_cur_metatag_name", &cpyhwpx::HwpWrapper::GetCurMetatagName,
+             "현재 메타태그명 조회")
+        .def("get_metatag_list", &cpyhwpx::HwpWrapper::GetMetatagList,
+             py::arg("number"),
+             py::arg("option"),
+             "메타태그 목록 조회")
+        .def("get_metatag_name_text", &cpyhwpx::HwpWrapper::GetMetatagNameText,
+             py::arg("tag"),
+             "메타태그 텍스트 조회")
+        .def("put_metatag_name_text", &cpyhwpx::HwpWrapper::PutMetatagNameText,
+             py::arg("tag"),
+             py::arg("text"),
+             "메타태그 텍스트 설정")
+        .def("rename_metatag", &cpyhwpx::HwpWrapper::RenameMetatag,
+             py::arg("oldtag"),
+             py::arg("newtag"),
+             "메타태그 이름 변경")
+        .def("modify_metatag_properties", &cpyhwpx::HwpWrapper::ModifyMetatagProperties,
+             py::arg("tag"),
+             py::arg("remove"),
+             py::arg("add"),
+             "메타태그 속성 수정")
+        .def("get_field_info", &cpyhwpx::HwpWrapper::GetFieldInfo,
+             "필드 정보 리스트 (HWPML2X 파싱)")
+        .def("set_field_by_bracket", &cpyhwpx::HwpWrapper::SetFieldByBracket,
+             "중괄호 구문을 필드로 변환 ({{name:direction:memo}}, [[name]])");
 
     //=========================================================================
     // XHwpDocument 클래스 바인딩
@@ -1333,4 +1724,128 @@ PYBIND11_MODULE(cpyhwpx, m) {
     actions.def("HanThDIC", &cpyhwpx::HwpActionHelper::HanThDIC, py::arg("hwp"), "한글 유의어 사전");
     actions.def("HwpDic", &cpyhwpx::HwpActionHelper::HwpDic, py::arg("hwp"), "한컴 사전");
     actions.def("ReturnKeyInField", &cpyhwpx::HwpActionHelper::ReturnKeyInField, py::arg("hwp"), "필드에서 엔터");
+
+    // =========================================================================
+    // 추가 Run 액션 (102개)
+    // =========================================================================
+
+    // Auto - AutoSpellSelect (17개)
+    actions.def("AutoSpellSelect0", &cpyhwpx::HwpActionHelper::AutoSpellSelect0, py::arg("hwp"), "자동 교정 어휘 선택 0");
+    actions.def("AutoSpellSelect1", &cpyhwpx::HwpActionHelper::AutoSpellSelect1, py::arg("hwp"), "자동 교정 어휘 선택 1");
+    actions.def("AutoSpellSelect2", &cpyhwpx::HwpActionHelper::AutoSpellSelect2, py::arg("hwp"), "자동 교정 어휘 선택 2");
+    actions.def("AutoSpellSelect3", &cpyhwpx::HwpActionHelper::AutoSpellSelect3, py::arg("hwp"), "자동 교정 어휘 선택 3");
+    actions.def("AutoSpellSelect4", &cpyhwpx::HwpActionHelper::AutoSpellSelect4, py::arg("hwp"), "자동 교정 어휘 선택 4");
+    actions.def("AutoSpellSelect5", &cpyhwpx::HwpActionHelper::AutoSpellSelect5, py::arg("hwp"), "자동 교정 어휘 선택 5");
+    actions.def("AutoSpellSelect6", &cpyhwpx::HwpActionHelper::AutoSpellSelect6, py::arg("hwp"), "자동 교정 어휘 선택 6");
+    actions.def("AutoSpellSelect7", &cpyhwpx::HwpActionHelper::AutoSpellSelect7, py::arg("hwp"), "자동 교정 어휘 선택 7");
+    actions.def("AutoSpellSelect8", &cpyhwpx::HwpActionHelper::AutoSpellSelect8, py::arg("hwp"), "자동 교정 어휘 선택 8");
+    actions.def("AutoSpellSelect9", &cpyhwpx::HwpActionHelper::AutoSpellSelect9, py::arg("hwp"), "자동 교정 어휘 선택 9");
+    actions.def("AutoSpellSelect10", &cpyhwpx::HwpActionHelper::AutoSpellSelect10, py::arg("hwp"), "자동 교정 어휘 선택 10");
+    actions.def("AutoSpellSelect11", &cpyhwpx::HwpActionHelper::AutoSpellSelect11, py::arg("hwp"), "자동 교정 어휘 선택 11");
+    actions.def("AutoSpellSelect12", &cpyhwpx::HwpActionHelper::AutoSpellSelect12, py::arg("hwp"), "자동 교정 어휘 선택 12");
+    actions.def("AutoSpellSelect13", &cpyhwpx::HwpActionHelper::AutoSpellSelect13, py::arg("hwp"), "자동 교정 어휘 선택 13");
+    actions.def("AutoSpellSelect14", &cpyhwpx::HwpActionHelper::AutoSpellSelect14, py::arg("hwp"), "자동 교정 어휘 선택 14");
+    actions.def("AutoSpellSelect15", &cpyhwpx::HwpActionHelper::AutoSpellSelect15, py::arg("hwp"), "자동 교정 어휘 선택 15");
+    actions.def("AutoSpellSelect16", &cpyhwpx::HwpActionHelper::AutoSpellSelect16, py::arg("hwp"), "자동 교정 어휘 선택 16");
+
+    // ViewOption (14개)
+    actions.def("ViewIdiom", &cpyhwpx::HwpActionHelper::ViewIdiom, py::arg("hwp"), "상용구 보기");
+    actions.def("ViewOptionMemoGuideline", &cpyhwpx::HwpActionHelper::ViewOptionMemoGuideline, py::arg("hwp"), "메모 안내선 보기");
+    actions.def("ViewOptionRevision", &cpyhwpx::HwpActionHelper::ViewOptionRevision, py::arg("hwp"), "교정 부호 보기");
+    actions.def("ViewOptionTrackChange", &cpyhwpx::HwpActionHelper::ViewOptionTrackChange, py::arg("hwp"), "변경 내용 추적 보기");
+    actions.def("ViewOptionTrackChangeFinal", &cpyhwpx::HwpActionHelper::ViewOptionTrackChangeFinal, py::arg("hwp"), "변경 내용 최종 보기");
+    actions.def("ViewOptionTrackChangeFinalMemo", &cpyhwpx::HwpActionHelper::ViewOptionTrackChangeFinalMemo, py::arg("hwp"), "변경 내용 최종 메모 보기");
+    actions.def("ViewOptionTrackChangeInline", &cpyhwpx::HwpActionHelper::ViewOptionTrackChangeInline, py::arg("hwp"), "변경 내용 인라인 보기");
+    actions.def("ViewOptionTrackChangeInsertDelete", &cpyhwpx::HwpActionHelper::ViewOptionTrackChangeInsertDelete, py::arg("hwp"), "삽입/삭제 보기");
+    actions.def("ViewOptionTrackChangeOriginal", &cpyhwpx::HwpActionHelper::ViewOptionTrackChangeOriginal, py::arg("hwp"), "변경 내용 원본 보기");
+    actions.def("ViewOptionTrackChangeOriginalMemo", &cpyhwpx::HwpActionHelper::ViewOptionTrackChangeOriginalMemo, py::arg("hwp"), "변경 내용 원본 메모 보기");
+    actions.def("ViewOptionTrackChangeShape", &cpyhwpx::HwpActionHelper::ViewOptionTrackChangeShape, py::arg("hwp"), "변경 내용 모양 보기");
+    actions.def("ViewOptionTrackChnageInfo", &cpyhwpx::HwpActionHelper::ViewOptionTrackChnageInfo, py::arg("hwp"), "변경 내용 정보 보기");
+    actions.def("ViewZoomNormal", &cpyhwpx::HwpActionHelper::ViewZoomNormal, py::arg("hwp"), "기본 배율 보기");
+    actions.def("ViewZoomRibon", &cpyhwpx::HwpActionHelper::ViewZoomRibon, py::arg("hwp"), "리본 배율 보기");
+
+    // Macro (22개)
+    actions.def("MacroPlay1", &cpyhwpx::HwpActionHelper::MacroPlay1, py::arg("hwp"), "매크로 재생 1");
+    actions.def("MacroPlay2", &cpyhwpx::HwpActionHelper::MacroPlay2, py::arg("hwp"), "매크로 재생 2");
+    actions.def("MacroPlay3", &cpyhwpx::HwpActionHelper::MacroPlay3, py::arg("hwp"), "매크로 재생 3");
+    actions.def("MacroPlay4", &cpyhwpx::HwpActionHelper::MacroPlay4, py::arg("hwp"), "매크로 재생 4");
+    actions.def("MacroPlay5", &cpyhwpx::HwpActionHelper::MacroPlay5, py::arg("hwp"), "매크로 재생 5");
+    actions.def("MacroPlay6", &cpyhwpx::HwpActionHelper::MacroPlay6, py::arg("hwp"), "매크로 재생 6");
+    actions.def("MacroPlay7", &cpyhwpx::HwpActionHelper::MacroPlay7, py::arg("hwp"), "매크로 재생 7");
+    actions.def("MacroPlay8", &cpyhwpx::HwpActionHelper::MacroPlay8, py::arg("hwp"), "매크로 재생 8");
+    actions.def("MacroPlay9", &cpyhwpx::HwpActionHelper::MacroPlay9, py::arg("hwp"), "매크로 재생 9");
+    actions.def("MacroPlay10", &cpyhwpx::HwpActionHelper::MacroPlay10, py::arg("hwp"), "매크로 재생 10");
+    actions.def("MacroPlay11", &cpyhwpx::HwpActionHelper::MacroPlay11, py::arg("hwp"), "매크로 재생 11");
+    actions.def("ScrMacroPause", &cpyhwpx::HwpActionHelper::ScrMacroPause, py::arg("hwp"), "스크립트 매크로 일시 정지");
+    actions.def("ScrMacroRepeat", &cpyhwpx::HwpActionHelper::ScrMacroRepeat, py::arg("hwp"), "스크립트 매크로 반복");
+    actions.def("ScrMacroStop", &cpyhwpx::HwpActionHelper::ScrMacroStop, py::arg("hwp"), "스크립트 매크로 중지");
+    actions.def("ScrMacroPlay1", &cpyhwpx::HwpActionHelper::ScrMacroPlay1, py::arg("hwp"), "스크립트 매크로 재생 1");
+    actions.def("ScrMacroPlay2", &cpyhwpx::HwpActionHelper::ScrMacroPlay2, py::arg("hwp"), "스크립트 매크로 재생 2");
+    actions.def("ScrMacroPlay3", &cpyhwpx::HwpActionHelper::ScrMacroPlay3, py::arg("hwp"), "스크립트 매크로 재생 3");
+    actions.def("ScrMacroPlay4", &cpyhwpx::HwpActionHelper::ScrMacroPlay4, py::arg("hwp"), "스크립트 매크로 재생 4");
+    actions.def("ScrMacroPlay5", &cpyhwpx::HwpActionHelper::ScrMacroPlay5, py::arg("hwp"), "스크립트 매크로 재생 5");
+    actions.def("ScrMacroPlay6", &cpyhwpx::HwpActionHelper::ScrMacroPlay6, py::arg("hwp"), "스크립트 매크로 재생 6");
+    actions.def("ScrMacroPlay7", &cpyhwpx::HwpActionHelper::ScrMacroPlay7, py::arg("hwp"), "스크립트 매크로 재생 7");
+    actions.def("ScrMacroPlay8", &cpyhwpx::HwpActionHelper::ScrMacroPlay8, py::arg("hwp"), "스크립트 매크로 재생 8");
+
+    // Quick (21개)
+    actions.def("QuickCorrectSound", &cpyhwpx::HwpActionHelper::QuickCorrectSound, py::arg("hwp"), "빠른 교정 소리");
+    actions.def("QuickMarkInsert0", &cpyhwpx::HwpActionHelper::QuickMarkInsert0, py::arg("hwp"), "빠른 마크 삽입 0");
+    actions.def("QuickMarkInsert1", &cpyhwpx::HwpActionHelper::QuickMarkInsert1, py::arg("hwp"), "빠른 마크 삽입 1");
+    actions.def("QuickMarkInsert2", &cpyhwpx::HwpActionHelper::QuickMarkInsert2, py::arg("hwp"), "빠른 마크 삽입 2");
+    actions.def("QuickMarkInsert3", &cpyhwpx::HwpActionHelper::QuickMarkInsert3, py::arg("hwp"), "빠른 마크 삽입 3");
+    actions.def("QuickMarkInsert4", &cpyhwpx::HwpActionHelper::QuickMarkInsert4, py::arg("hwp"), "빠른 마크 삽입 4");
+    actions.def("QuickMarkInsert5", &cpyhwpx::HwpActionHelper::QuickMarkInsert5, py::arg("hwp"), "빠른 마크 삽입 5");
+    actions.def("QuickMarkInsert6", &cpyhwpx::HwpActionHelper::QuickMarkInsert6, py::arg("hwp"), "빠른 마크 삽입 6");
+    actions.def("QuickMarkInsert7", &cpyhwpx::HwpActionHelper::QuickMarkInsert7, py::arg("hwp"), "빠른 마크 삽입 7");
+    actions.def("QuickMarkInsert8", &cpyhwpx::HwpActionHelper::QuickMarkInsert8, py::arg("hwp"), "빠른 마크 삽입 8");
+    actions.def("QuickMarkInsert9", &cpyhwpx::HwpActionHelper::QuickMarkInsert9, py::arg("hwp"), "빠른 마크 삽입 9");
+    actions.def("QuickMarkMove0", &cpyhwpx::HwpActionHelper::QuickMarkMove0, py::arg("hwp"), "빠른 마크 이동 0");
+    actions.def("QuickMarkMove1", &cpyhwpx::HwpActionHelper::QuickMarkMove1, py::arg("hwp"), "빠른 마크 이동 1");
+    actions.def("QuickMarkMove2", &cpyhwpx::HwpActionHelper::QuickMarkMove2, py::arg("hwp"), "빠른 마크 이동 2");
+    actions.def("QuickMarkMove3", &cpyhwpx::HwpActionHelper::QuickMarkMove3, py::arg("hwp"), "빠른 마크 이동 3");
+    actions.def("QuickMarkMove4", &cpyhwpx::HwpActionHelper::QuickMarkMove4, py::arg("hwp"), "빠른 마크 이동 4");
+    actions.def("QuickMarkMove5", &cpyhwpx::HwpActionHelper::QuickMarkMove5, py::arg("hwp"), "빠른 마크 이동 5");
+    actions.def("QuickMarkMove6", &cpyhwpx::HwpActionHelper::QuickMarkMove6, py::arg("hwp"), "빠른 마크 이동 6");
+    actions.def("QuickMarkMove7", &cpyhwpx::HwpActionHelper::QuickMarkMove7, py::arg("hwp"), "빠른 마크 이동 7");
+    actions.def("QuickMarkMove8", &cpyhwpx::HwpActionHelper::QuickMarkMove8, py::arg("hwp"), "빠른 마크 이동 8");
+    actions.def("QuickMarkMove9", &cpyhwpx::HwpActionHelper::QuickMarkMove9, py::arg("hwp"), "빠른 마크 이동 9");
+
+    // MasterPage (5개)
+    actions.def("MasterPagePrevSection", &cpyhwpx::HwpActionHelper::MasterPagePrevSection, py::arg("hwp"), "바탕쪽 이전 구역");
+    actions.def("MasterPageType", &cpyhwpx::HwpActionHelper::MasterPageType, py::arg("hwp"), "바탕쪽 종류");
+    actions.def("MPSectionToNext", &cpyhwpx::HwpActionHelper::MPSectionToNext, py::arg("hwp"), "다음 구역으로 이동");
+    actions.def("MPSectionToPrevious", &cpyhwpx::HwpActionHelper::MPSectionToPrevious, py::arg("hwp"), "이전 구역으로 이동");
+    actions.def("MPShowMarginBorder", &cpyhwpx::HwpActionHelper::MPShowMarginBorder, py::arg("hwp"), "여백 경계 표시");
+
+    // Picture (8개)
+    actions.def("PictureEffect1", &cpyhwpx::HwpActionHelper::PictureEffect1, py::arg("hwp"), "그림 효과 1");
+    actions.def("PictureEffect2", &cpyhwpx::HwpActionHelper::PictureEffect2, py::arg("hwp"), "그림 효과 2");
+    actions.def("PictureEffect3", &cpyhwpx::HwpActionHelper::PictureEffect3, py::arg("hwp"), "그림 효과 3");
+    actions.def("PictureEffect4", &cpyhwpx::HwpActionHelper::PictureEffect4, py::arg("hwp"), "그림 효과 4");
+    actions.def("PictureEffect5", &cpyhwpx::HwpActionHelper::PictureEffect5, py::arg("hwp"), "그림 효과 5");
+    actions.def("PictureEffect6", &cpyhwpx::HwpActionHelper::PictureEffect6, py::arg("hwp"), "그림 효과 6");
+    actions.def("PictureEffect7", &cpyhwpx::HwpActionHelper::PictureEffect7, py::arg("hwp"), "그림 효과 7");
+    actions.def("PictureEffect8", &cpyhwpx::HwpActionHelper::PictureEffect8, py::arg("hwp"), "그림 효과 8");
+
+    // Note/Memo (8개)
+    actions.def("NoteNumProperty", &cpyhwpx::HwpActionHelper::NoteNumProperty, py::arg("hwp"), "각주 번호 속성");
+    actions.def("NoteNumShape", &cpyhwpx::HwpActionHelper::NoteNumShape, py::arg("hwp"), "각주 번호 모양");
+    actions.def("NoteLineColor", &cpyhwpx::HwpActionHelper::NoteLineColor, py::arg("hwp"), "각주 선 색상");
+    actions.def("NoteLineLength", &cpyhwpx::HwpActionHelper::NoteLineLength, py::arg("hwp"), "각주 선 길이");
+    actions.def("NoteLineShape", &cpyhwpx::HwpActionHelper::NoteLineShape, py::arg("hwp"), "각주 선 모양");
+    actions.def("NoteLineWeight", &cpyhwpx::HwpActionHelper::NoteLineWeight, py::arg("hwp"), "각주 선 굵기");
+    actions.def("NotePosition", &cpyhwpx::HwpActionHelper::NotePosition, py::arg("hwp"), "각주 위치");
+    actions.def("EditFieldMemo", &cpyhwpx::HwpActionHelper::EditFieldMemo, py::arg("hwp"), "메모 필드 편집");
+
+    // FormObj (2개)
+    actions.def("FormObjCreatorScrollBar", &cpyhwpx::HwpActionHelper::FormObjCreatorScrollBar, py::arg("hwp"), "양식 스크롤바 생성");
+    actions.def("FormObjRadioGroup", &cpyhwpx::HwpActionHelper::FormObjRadioGroup, py::arg("hwp"), "라디오 그룹");
+
+    // Window/Frame (5개)
+    actions.def("FrameViewZoomRibon", &cpyhwpx::HwpActionHelper::FrameViewZoomRibon, py::arg("hwp"), "프레임 리본 배율");
+    actions.def("SplitMemo", &cpyhwpx::HwpActionHelper::SplitMemo, py::arg("hwp"), "메모 분할");
+    actions.def("SplitMemoClose", &cpyhwpx::HwpActionHelper::SplitMemoClose, py::arg("hwp"), "메모 분할 닫기");
+    actions.def("SplitMemoOpen", &cpyhwpx::HwpActionHelper::SplitMemoOpen, py::arg("hwp"), "메모 분할 열기");
+    actions.def("SplitMainActive", &cpyhwpx::HwpActionHelper::SplitMainActive, py::arg("hwp"), "메인 분할 활성화");
 }

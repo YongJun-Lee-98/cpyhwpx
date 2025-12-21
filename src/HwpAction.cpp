@@ -710,4 +710,133 @@ bool HwpActionHelper::HanThDIC(HwpWrapper* hwp) { return Run(hwp, L"HanThDIC"); 
 bool HwpActionHelper::HwpDic(HwpWrapper* hwp) { return Run(hwp, L"HwpDic"); }
 bool HwpActionHelper::ReturnKeyInField(HwpWrapper* hwp) { return Run(hwp, L"ReturnKeyInField"); }
 
+//=============================================================================
+// 추가 Run 액션들 (102개 신규)
+//=============================================================================
+
+// Auto - AutoSpellSelect (17개)
+bool HwpActionHelper::AutoSpellSelect0(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect0"); }
+bool HwpActionHelper::AutoSpellSelect1(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect1"); }
+bool HwpActionHelper::AutoSpellSelect2(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect2"); }
+bool HwpActionHelper::AutoSpellSelect3(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect3"); }
+bool HwpActionHelper::AutoSpellSelect4(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect4"); }
+bool HwpActionHelper::AutoSpellSelect5(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect5"); }
+bool HwpActionHelper::AutoSpellSelect6(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect6"); }
+bool HwpActionHelper::AutoSpellSelect7(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect7"); }
+bool HwpActionHelper::AutoSpellSelect8(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect8"); }
+bool HwpActionHelper::AutoSpellSelect9(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect9"); }
+bool HwpActionHelper::AutoSpellSelect10(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect10"); }
+bool HwpActionHelper::AutoSpellSelect11(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect11"); }
+bool HwpActionHelper::AutoSpellSelect12(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect12"); }
+bool HwpActionHelper::AutoSpellSelect13(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect13"); }
+bool HwpActionHelper::AutoSpellSelect14(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect14"); }
+bool HwpActionHelper::AutoSpellSelect15(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect15"); }
+bool HwpActionHelper::AutoSpellSelect16(HwpWrapper* hwp) { return Run(hwp, L"AutoSpellSelect16"); }
+
+// ViewOption (14개)
+bool HwpActionHelper::ViewIdiom(HwpWrapper* hwp) { return Run(hwp, L"ViewIdiom"); }
+bool HwpActionHelper::ViewOptionMemoGuideline(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionMemoGuideline"); }
+bool HwpActionHelper::ViewOptionRevision(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionRevision"); }
+bool HwpActionHelper::ViewOptionTrackChange(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChange"); }
+bool HwpActionHelper::ViewOptionTrackChangeFinal(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChangeFinal"); }
+bool HwpActionHelper::ViewOptionTrackChangeFinalMemo(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChangeFinalMemo"); }
+bool HwpActionHelper::ViewOptionTrackChangeInline(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChangeInline"); }
+bool HwpActionHelper::ViewOptionTrackChangeInsertDelete(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChangeInsertDelete"); }
+bool HwpActionHelper::ViewOptionTrackChangeOriginal(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChangeOriginal"); }
+bool HwpActionHelper::ViewOptionTrackChangeOriginalMemo(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChangeOriginalMemo"); }
+bool HwpActionHelper::ViewOptionTrackChangeShape(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChangeShape"); }
+bool HwpActionHelper::ViewOptionTrackChnageInfo(HwpWrapper* hwp) { return Run(hwp, L"ViewOptionTrackChnageInfo"); }
+bool HwpActionHelper::ViewZoomNormal(HwpWrapper* hwp) { return Run(hwp, L"ViewZoomNormal"); }
+bool HwpActionHelper::ViewZoomRibon(HwpWrapper* hwp) { return Run(hwp, L"ViewZoomRibon"); }
+
+// Macro (22개)
+bool HwpActionHelper::MacroPlay1(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay1"); }
+bool HwpActionHelper::MacroPlay2(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay2"); }
+bool HwpActionHelper::MacroPlay3(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay3"); }
+bool HwpActionHelper::MacroPlay4(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay4"); }
+bool HwpActionHelper::MacroPlay5(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay5"); }
+bool HwpActionHelper::MacroPlay6(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay6"); }
+bool HwpActionHelper::MacroPlay7(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay7"); }
+bool HwpActionHelper::MacroPlay8(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay8"); }
+bool HwpActionHelper::MacroPlay9(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay9"); }
+bool HwpActionHelper::MacroPlay10(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay10"); }
+bool HwpActionHelper::MacroPlay11(HwpWrapper* hwp) { return Run(hwp, L"MacroPlay11"); }
+bool HwpActionHelper::ScrMacroPause(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPause"); }
+bool HwpActionHelper::ScrMacroRepeat(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroRepeat"); }
+bool HwpActionHelper::ScrMacroStop(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroStop"); }
+bool HwpActionHelper::ScrMacroPlay1(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay1"); }
+bool HwpActionHelper::ScrMacroPlay2(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay2"); }
+bool HwpActionHelper::ScrMacroPlay3(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay3"); }
+bool HwpActionHelper::ScrMacroPlay4(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay4"); }
+bool HwpActionHelper::ScrMacroPlay5(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay5"); }
+bool HwpActionHelper::ScrMacroPlay6(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay6"); }
+bool HwpActionHelper::ScrMacroPlay7(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay7"); }
+bool HwpActionHelper::ScrMacroPlay8(HwpWrapper* hwp) { return Run(hwp, L"ScrMacroPlay8"); }
+
+// Quick (21개)
+bool HwpActionHelper::QuickCorrectSound(HwpWrapper* hwp) { return Run(hwp, L"QuickCorrectSound"); }
+bool HwpActionHelper::QuickMarkInsert0(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert0"); }
+bool HwpActionHelper::QuickMarkInsert1(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert1"); }
+bool HwpActionHelper::QuickMarkInsert2(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert2"); }
+bool HwpActionHelper::QuickMarkInsert3(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert3"); }
+bool HwpActionHelper::QuickMarkInsert4(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert4"); }
+bool HwpActionHelper::QuickMarkInsert5(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert5"); }
+bool HwpActionHelper::QuickMarkInsert6(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert6"); }
+bool HwpActionHelper::QuickMarkInsert7(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert7"); }
+bool HwpActionHelper::QuickMarkInsert8(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert8"); }
+bool HwpActionHelper::QuickMarkInsert9(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkInsert9"); }
+bool HwpActionHelper::QuickMarkMove0(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove0"); }
+bool HwpActionHelper::QuickMarkMove1(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove1"); }
+bool HwpActionHelper::QuickMarkMove2(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove2"); }
+bool HwpActionHelper::QuickMarkMove3(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove3"); }
+bool HwpActionHelper::QuickMarkMove4(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove4"); }
+bool HwpActionHelper::QuickMarkMove5(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove5"); }
+bool HwpActionHelper::QuickMarkMove6(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove6"); }
+bool HwpActionHelper::QuickMarkMove7(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove7"); }
+bool HwpActionHelper::QuickMarkMove8(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove8"); }
+bool HwpActionHelper::QuickMarkMove9(HwpWrapper* hwp) { return Run(hwp, L"QuickMarkMove9"); }
+
+// MasterPage (5개)
+bool HwpActionHelper::MasterPagePrevSection(HwpWrapper* hwp) { return Run(hwp, L"MasterPagePrevSection"); }
+bool HwpActionHelper::MasterPageType(HwpWrapper* hwp) { return Run(hwp, L"MasterPageType"); }
+bool HwpActionHelper::MPSectionToNext(HwpWrapper* hwp) { return Run(hwp, L"MPSectionToNext"); }
+bool HwpActionHelper::MPSectionToPrevious(HwpWrapper* hwp) { return Run(hwp, L"MPSectionToPrevious"); }
+bool HwpActionHelper::MPShowMarginBorder(HwpWrapper* hwp) { return Run(hwp, L"MPShowMarginBorder"); }
+
+// Picture (8개)
+bool HwpActionHelper::PictureEffect1(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect1"); }
+bool HwpActionHelper::PictureEffect2(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect2"); }
+bool HwpActionHelper::PictureEffect3(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect3"); }
+bool HwpActionHelper::PictureEffect4(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect4"); }
+bool HwpActionHelper::PictureEffect5(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect5"); }
+bool HwpActionHelper::PictureEffect6(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect6"); }
+bool HwpActionHelper::PictureEffect7(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect7"); }
+bool HwpActionHelper::PictureEffect8(HwpWrapper* hwp) { return Run(hwp, L"PictureEffect8"); }
+
+// Note/Memo (8개)
+bool HwpActionHelper::NoteNumProperty(HwpWrapper* hwp) { return Run(hwp, L"NoteNumProperty"); }
+bool HwpActionHelper::NoteNumShape(HwpWrapper* hwp) { return Run(hwp, L"NoteNumShape"); }
+bool HwpActionHelper::NoteLineColor(HwpWrapper* hwp) { return Run(hwp, L"NoteLineColor"); }
+bool HwpActionHelper::NoteLineLength(HwpWrapper* hwp) { return Run(hwp, L"NoteLineLength"); }
+bool HwpActionHelper::NoteLineShape(HwpWrapper* hwp) { return Run(hwp, L"NoteLineShape"); }
+bool HwpActionHelper::NoteLineWeight(HwpWrapper* hwp) { return Run(hwp, L"NoteLineWeight"); }
+bool HwpActionHelper::NotePosition(HwpWrapper* hwp) { return Run(hwp, L"NotePosition"); }
+bool HwpActionHelper::EditFieldMemo(HwpWrapper* hwp) { return Run(hwp, L"EditFieldMemo"); }
+
+// FormObj (2개)
+bool HwpActionHelper::FormObjCreatorScrollBar(HwpWrapper* hwp) { return Run(hwp, L"FormObjCreatorScrollBar"); }
+bool HwpActionHelper::FormObjRadioGroup(HwpWrapper* hwp) { return Run(hwp, L"FormObjRadioGroup"); }
+
+// Window/Frame (5개)
+bool HwpActionHelper::FrameViewZoomRibon(HwpWrapper* hwp) { return Run(hwp, L"FrameViewZoomRibon"); }
+bool HwpActionHelper::SplitMemo(HwpWrapper* hwp) { return Run(hwp, L"SplitMemo"); }
+bool HwpActionHelper::SplitMemoClose(HwpWrapper* hwp) { return Run(hwp, L"SplitMemoClose"); }
+bool HwpActionHelper::SplitMemoOpen(HwpWrapper* hwp) { return Run(hwp, L"SplitMemoOpen"); }
+bool HwpActionHelper::SplitMainActive(HwpWrapper* hwp) { return Run(hwp, L"SplitMainActive"); }
+
+// Misc 추가 (기타)
+bool HwpActionHelper::Jajun(HwpWrapper* hwp) { return Run(hwp, L"Jajun"); }
+bool HwpActionHelper::ChangeSkin(HwpWrapper* hwp) { return Run(hwp, L"ChangeSkin"); }
+bool HwpActionHelper::SoftKeyboard(HwpWrapper* hwp) { return Run(hwp, L"SoftKeyboard"); }
+
 } // namespace cpyhwpx

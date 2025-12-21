@@ -180,6 +180,70 @@ public:
     static FontPreset MaruBuriSemiBold();
     static FontPreset MaruBuriExtraLight();
 
+    // 보한글 레거시 폰트 (20개)
+    static FontPreset BHGothic();           // 고딕
+    static FontPreset BHMyeongjo();         // 명조
+    static FontPreset BHSaemmul();          // 샘물
+    static FontPreset BHPilgi();            // 필기
+    static FontPreset BHSinMyeongjo();      // 신명조
+    static FontPreset BHGyeonMyeongjo();    // 견명조
+    static FontPreset BHJungGothic();       // 중고딕
+    static FontPreset BHGyeonGothic();      // 견고딕
+    static FontPreset BHGraphic();          // 그래픽
+    static FontPreset BHGungseo();          // 궁서
+    static FontPreset BHGaneunGonghan();    // 가는공한
+    static FontPreset BHJungganGonghan();   // 중간공한
+    static FontPreset BHGulgeunGonghan();   // 굵은공한
+    static FontPreset BHGaneunHan();        // 가는한
+    static FontPreset BHJungganHan();       // 중간한
+    static FontPreset BHGulgeunHan();       // 굵은한
+    static FontPreset BHPenHeullim();       // 펜흘림
+    static FontPreset BHHeadline();         // 헤드라인
+    static FontPreset BHGaneunHeadline();   // 가는헤드라인
+    static FontPreset BHTaeNamu();          // 태나무
+
+    // 휴먼 폰트 (9개)
+    static FontPreset HumanMyeongjo();      // 휴먼명조
+    static FontPreset HumanGothic();        // 휴먼고딕
+    static FontPreset HumanYetche();        // 휴먼옛체
+    static FontPreset HumanGaneunSaemche(); // 휴먼가는샘체
+    static FontPreset HumanJungganSaemche();// 휴먼중간샘체
+    static FontPreset HumanGulgeunSaemche();// 휴먼굵은샘체
+    static FontPreset HumanGaneunPamche();  // 휴먼가는팸체
+    static FontPreset HumanJungganPamche(); // 휴먼중간팸체
+    static FontPreset HumanGulgeunPamche(); // 휴먼굵은팸체
+
+    // 양재 폰트 (9개)
+    static FontPreset YangJaeDaunMyeongjoM();  // 양재다운명조M
+    static FontPreset YangJaeBonmokgakM();     // 양재본목각M
+    static FontPreset YangJaeSoseul();         // 양재소슬
+    static FontPreset YangJaeTeunteunB();      // 양재튼튼B
+    static FontPreset YangJaeChamsutB();       // 양재참숯B
+    static FontPreset YangJaeDulgi();          // 양재둘기
+    static FontPreset YangJaeMaehwa();         // 양재매화
+    static FontPreset YangJaeShanel();         // 양재샤넬
+    static FontPreset YangJaeWadang();         // 양재와당
+    static FontPreset YangJaeInitial();        // 양재이니셜
+
+    // 신명 폰트 (10개)
+    static FontPreset SMSeMyeongjo();       // 신명세명조
+    static FontPreset SMJungMyeongjo();     // 신명중명조
+    static FontPreset SMTaeMyeongjo();      // 신명태명조
+    static FontPreset SMGyeonMyeongjo();    // 신명견명조
+    static FontPreset SMSinmunMyeongjo();   // 신명신문명조
+    static FontPreset SMSeGothic();         // 신명세고딕
+    static FontPreset SMJungGothic();       // 신명중고딕
+    static FontPreset SMTaeGothic();        // 신명태고딕
+    static FontPreset SMGyeonGothic();      // 신명견고딕
+    static FontPreset SMGungseo();          // 신명궁서
+
+    // 특수 한자 폰트 (#접두사) (5개)
+    static FontPreset HanjaSeMyeongjo();    // #세명조
+    static FontPreset HanjaJungMyeongjo();  // #중명조
+    static FontPreset HanjaTaeMyeongjo();   // #태명조
+    static FontPreset HanjaGyeonMyeongjo(); // #견명조
+    static FontPreset HanjaJungGothic();    // #중고딕
+
     //=========================================================================
     // 헬퍼 메서드
     //=========================================================================

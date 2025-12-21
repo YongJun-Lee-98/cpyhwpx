@@ -42,7 +42,7 @@ hwp.quit()
 
 ```python
 info = cpyhwpx.get_architecture_info()
-# {'python_bits': 64, 'using_bridge': True, 'version': '1.0.0'}
+# {'python_bits': 64, 'version': '1.1.0'}
 ```
 
 ---
@@ -519,19 +519,17 @@ hwp.edit_mode = 1
 ```python
 import cpyhwpx
 info = cpyhwpx.get_architecture_info()
-# {'python_bits': 64, 'using_bridge': True, 'version': '1.0.0'}
+# {'python_bits': 64, 'version': '1.1.0'}
 ```
 
 **반환값:** `dict`
-- `python_bits`: Python 비트 수 (32 또는 64)
-- `using_bridge`: 브릿지 사용 여부
+- `python_bits`: Python 비트 수 (64)
 - `version`: 라이브러리 버전
 
 ---
 
 ## 열거형/타입
 
-> **참고:** 64-bit Python에서는 일부 타입이 `None`일 수 있습니다.
 
 ### ViewState
 뷰 상태 열거형
@@ -567,27 +565,15 @@ info = cpyhwpx.get_architecture_info()
 글꼴 프리셋
 
 ### FontDefs
-글꼴 정의 (32-bit에서만 직접 사용 가능)
-
----
-
-## 아키텍처 지원
-
-| Python 아키텍처 | 지원 방식 |
-|-----------------|-----------|
-| 32-bit | 직접 cpyhwpx.pyd 로드 |
-| 64-bit | subprocess 브릿지를 통해 32-bit 서버 사용 |
-
-64-bit Python 환경에서도 32-bit HWP COM과 통신하기 위해 자동으로 32-bit Python 프로세스가 생성됩니다.
+글꼴 정의
 
 ---
 
 ## 요구사항
 
-- Python 3.12+
-- 한/글 (32-bit COM 지원 버전)
-- Windows OS
-- 64-bit 환경에서는 32-bit Python 3.12 필요
+- Python 3.8+ (64-bit)
+- 한/글 (HWP) 설치
+- Windows 10/11
 
 ---
 

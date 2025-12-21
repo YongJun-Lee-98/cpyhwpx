@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cpyhwpx"
 version = "1.0.0"
-description = "C++ HWP Automation Library - 32-bit/64-bit Python 지원"
+description = "C++ HWP Automation Library for Python (pyhwpx C++ port)"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "MIT with Additional Restrictions"}
 requires-python = ">=3.8"
 authors = [
     {name = "cpyhwpx Contributors"}
@@ -36,10 +36,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/example/cpyhwpx"
-Documentation = "https://github.com/example/cpyhwpx#readme"
-Repository = "https://github.com/example/cpyhwpx.git"
-Issues = "https://github.com/example/cpyhwpx/issues"
+Homepage = "https://github.com/YongJun-Lee-98/cpyhwpx"
+Documentation = "https://github.com/YongJun-Lee-98/cpyhwpx#readme"
+Repository = "https://github.com/YongJun-Lee-98/cpyhwpx.git"
+Issues = "https://github.com/YongJun-Lee-98/cpyhwpx/issues"
 
 [tool.setuptools]
 packages = ["cpyhwpx", "cpyhwpx._native"]

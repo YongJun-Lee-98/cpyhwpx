@@ -7,12 +7,10 @@
 
 ## 요구 사항
 
-- Windows (32bit 또는 32bit Python)
-- Python 3.8 이상 (32bit)
+- Windows 10/11 (64-bit)
+- Python 3.8 이상 (64-bit)
 - 한/글(HWP) 설치
 - Visual Studio 2019 이상 (빌드 시)
-
-> **참고**: HWP는 32bit 프로그램이므로 32bit Python이 필요합니다.
 
 ## 설치
 
@@ -37,7 +35,7 @@ pip install .
 ```bash
 mkdir build
 cd build
-cmake .. -A Win32
+cmake .. -A x64
 cmake --build . --config Release
 ```
 
@@ -156,9 +154,13 @@ hwp = cpyhwpx.Hwp()
 
 ## 라이선스
 
-MIT License
+MIT License with Additional Restrictions
+
+- 자유롭게 사용, 수정, 배포 가능
+- **원본 그대로 상업적 판매 금지**
+- 수정/통합한 파생 저작물 판매는 허용
 
 ## 참고
 
-- [pyhwpx](https://github.com/example/pyhwpx) - 원본 Python 라이브러리
+- [pyhwpx](https://github.com/martiniifun/pyhwpx) - 원본 Python 라이브러리 (cpyhwpx는 이를 C++로 포팅)
 - [한/글 자동화 API](https://www.hancom.com) - 한컴오피스 공식 문서

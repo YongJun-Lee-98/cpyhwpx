@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: pyhwpx (Original Project)
+    url: https://github.com/martiniifun/pyhwpx
+    about: For issues related to the original pyhwpx library
+  - name: Documentation
+    url: https://github.com/YongJun-Lee-98/cpyhwpx#readme
+    about: Read the documentation before reporting issues

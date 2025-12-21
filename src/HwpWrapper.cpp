@@ -4980,4 +4980,299 @@ bool HwpWrapper::SetPara(int align_type,
     return SetParaShape(props);
 }
 
+//=============================================================================
+// COM 속성 접근 (Low-level)
+//=============================================================================
+
+IDispatch* HwpWrapper::GetApplication()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"Application");
+    if (result.vt == VT_DISPATCH) {
+        return result.pdispVal;  // 참조 카운트 유지
+    }
+    return nullptr;
+}
+
+std::wstring HwpWrapper::GetCLSID()
+{
+    VARIANT result = GetProperty(L"CLSID");
+    if (result.vt == VT_BSTR && result.bstrVal) {
+        std::wstring clsid(result.bstrVal);
+        SysFreeString(result.bstrVal);
+        return clsid;
+    }
+    return L"";
+}
+
+int HwpWrapper::GetCurFieldState()
+{
+    VARIANT result = GetProperty(L"CurFieldState");
+    if (result.vt == VT_I4) {
+        return result.lVal;
+    } else if (result.vt == VT_I2) {
+        return result.iVal;
+    }
+    return 0;
+}
+
+int HwpWrapper::GetCurMetatagState()
+{
+    VARIANT result = GetProperty(L"CurMetatagState");
+    if (result.vt == VT_I4) {
+        return result.lVal;
+    } else if (result.vt == VT_I2) {
+        return result.iVal;
+    }
+    return 0;
+}
+
+IDispatch* HwpWrapper::GetEngineProperties()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"EngineProperties");
+    if (result.vt == VT_DISPATCH) {
+        return result.pdispVal;
+    }
+    return nullptr;
+}
+
+bool HwpWrapper::GetIsPrivateInfoProtected()
+{
+    VARIANT result = GetProperty(L"IsPrivateInfoProtected");
+    if (result.vt == VT_BOOL) {
+        return result.boolVal != VARIANT_FALSE;
+    }
+    return false;
+}
+
+bool HwpWrapper::GetIsTrackChange()
+{
+    VARIANT result = GetProperty(L"IsTrackChange");
+    if (result.vt == VT_BOOL) {
+        return result.boolVal != VARIANT_FALSE;
+    }
+    return false;
+}
+
+std::wstring HwpWrapper::GetDocPath()
+{
+    VARIANT result = GetProperty(L"Path");
+    if (result.vt == VT_BSTR && result.bstrVal) {
+        std::wstring path(result.bstrVal);
+        SysFreeString(result.bstrVal);
+        return path;
+    }
+    return L"";
+}
+
+int HwpWrapper::GetSelectionMode()
+{
+    VARIANT result = GetProperty(L"SelectionMode");
+    if (result.vt == VT_I4) {
+        return result.lVal;
+    } else if (result.vt == VT_I2) {
+        return result.iVal;
+    }
+    return 0;
+}
+
+std::wstring HwpWrapper::GetTitle()
+{
+    // pyhwpx의 get_title() 구현 참조
+    // hwp.XHwpWindows.Active_XHwpWindow.Caption 접근
+    if (!m_pHwp) return L"";
+
+    // XHwpWindows 가져오기
+    VARIANT vWindows = GetProperty(L"XHwpWindows");
+    if (vWindows.vt != VT_DISPATCH || !vWindows.pdispVal) {
+        return L"";
+    }
+
+    IDispatch* pWindows = vWindows.pdispVal;
+
+    // Active_XHwpWindow 가져오기
+    DISPID dispid;
+    OLECHAR* propName = const_cast<OLECHAR*>(L"Active_XHwpWindow");
+    HRESULT hr = pWindows->GetIDsOfNames(IID_NULL, &propName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pWindows->Release();
+        return L"";
+    }
+
+    DISPPARAMS params = { nullptr, nullptr, 0, 0 };
+    VARIANT vActiveWindow;
+    VariantInit(&vActiveWindow);
+    hr = pWindows->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &params, &vActiveWindow, nullptr, nullptr);
+    pWindows->Release();
+
+    if (FAILED(hr) || vActiveWindow.vt != VT_DISPATCH || !vActiveWindow.pdispVal) {
+        VariantClear(&vActiveWindow);
+        return L"";
+    }
+
+    IDispatch* pActiveWindow = vActiveWindow.pdispVal;
+
+    // Caption 가져오기
+    propName = const_cast<OLECHAR*>(L"Caption");
+    hr = pActiveWindow->GetIDsOfNames(IID_NULL, &propName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pActiveWindow->Release();
+        return L"";
+    }
+
+    VARIANT vCaption;
+    VariantInit(&vCaption);
+    hr = pActiveWindow->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &params, &vCaption, nullptr, nullptr);
+    pActiveWindow->Release();
+
+    std::wstring title;
+    if (SUCCEEDED(hr) && vCaption.vt == VT_BSTR && vCaption.bstrVal) {
+        title = vCaption.bstrVal;
+    }
+    VariantClear(&vCaption);
+
+    return title;
+}
+
+IDispatch* HwpWrapper::GetViewProperties()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"ViewProperties");
+    if (result.vt == VT_DISPATCH) {
+        return result.pdispVal;
+    }
+    return nullptr;
+}
+
+void HwpWrapper::SetViewProperties(IDispatch* props)
+{
+    if (!m_pHwp || !props) return;
+
+    VARIANT vProps;
+    VariantInit(&vProps);
+    vProps.vt = VT_DISPATCH;
+    vProps.pdispVal = props;
+
+    SetProperty(L"ViewProperties", vProps);
+}
+
+IDispatch* HwpWrapper::GetXHwpMessageBox()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"XHwpMessageBox");
+    if (result.vt == VT_DISPATCH) {
+        return result.pdispVal;
+    }
+    return nullptr;
+}
+
+IDispatch* HwpWrapper::GetXHwpODBC()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"XHwpODBC");
+    if (result.vt == VT_DISPATCH) {
+        return result.pdispVal;
+    }
+    return nullptr;
+}
+
+IDispatch* HwpWrapper::GetXHwpWindows()
+{
+    if (!m_pHwp) return nullptr;
+
+    VARIANT result = GetProperty(L"XHwpWindows");
+    if (result.vt == VT_DISPATCH) {
+        return result.pdispVal;
+    }
+    return nullptr;
+}
+
+std::wstring HwpWrapper::GetCurrentFont()
+{
+    // HParameterSet.HCharShape.Item("FaceNameHangul") 접근
+    if (!m_pHwp) return L"";
+
+    // 1. HParameterSet 가져오기
+    IDispatch* pHParamSet = GetHParameterSet();
+    if (!pHParamSet) return L"";
+
+    // 2. HCharShape 가져오기
+    DISPID dispid;
+    OLECHAR* propName = const_cast<OLECHAR*>(L"HCharShape");
+    HRESULT hr = pHParamSet->GetIDsOfNames(IID_NULL, &propName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return L"";
+
+    DISPPARAMS params = { nullptr, nullptr, 0, 0 };
+    VARIANT vCharShape;
+    VariantInit(&vCharShape);
+    hr = pHParamSet->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &params, &vCharShape, nullptr, nullptr);
+    if (FAILED(hr) || vCharShape.vt != VT_DISPATCH || !vCharShape.pdispVal) {
+        VariantClear(&vCharShape);
+        return L"";
+    }
+
+    IDispatch* pCharShape = vCharShape.pdispVal;
+
+    // 3. HAction.GetDefault("CharShape") 호출하여 현재 설정 로드
+    IDispatch* pHAction = GetHAction();
+    if (pHAction) {
+        OLECHAR* methodName = const_cast<OLECHAR*>(L"GetDefault");
+        DISPID dispidGetDefault;
+        hr = pHAction->GetIDsOfNames(IID_NULL, &methodName, 1, LOCALE_USER_DEFAULT, &dispidGetDefault);
+        if (SUCCEEDED(hr)) {
+            VARIANT vActName, vParamSet;
+            VariantInit(&vActName);
+            VariantInit(&vParamSet);
+            vActName.vt = VT_BSTR;
+            vActName.bstrVal = SysAllocString(L"CharShape");
+            vParamSet.vt = VT_DISPATCH;
+            vParamSet.pdispVal = pCharShape;
+
+            VARIANT args[2] = { vParamSet, vActName };
+            DISPPARAMS getDefaultParams = { args, nullptr, 2, 0 };
+            VARIANT vResult;
+            VariantInit(&vResult);
+            pHAction->Invoke(dispidGetDefault, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD, &getDefaultParams, &vResult, nullptr, nullptr);
+            SysFreeString(vActName.bstrVal);
+            VariantClear(&vResult);
+        }
+    }
+
+    // 4. Item("FaceNameHangul") 호출
+    propName = const_cast<OLECHAR*>(L"Item");
+    hr = pCharShape->GetIDsOfNames(IID_NULL, &propName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pCharShape->Release();
+        return L"";
+    }
+
+    VARIANT vPropName;
+    VariantInit(&vPropName);
+    vPropName.vt = VT_BSTR;
+    vPropName.bstrVal = SysAllocString(L"FaceNameHangul");
+
+    VARIANT args[1] = { vPropName };
+    DISPPARAMS itemParams = { args, nullptr, 1, 0 };
+    VARIANT vFontName;
+    VariantInit(&vFontName);
+
+    hr = pCharShape->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &itemParams, &vFontName, nullptr, nullptr);
+    SysFreeString(vPropName.bstrVal);
+    pCharShape->Release();
+
+    std::wstring fontName;
+    if (SUCCEEDED(hr) && vFontName.vt == VT_BSTR && vFontName.bstrVal) {
+        fontName = vFontName.bstrVal;
+    }
+    VariantClear(&vFontName);
+
+    return fontName;
+}
+
 } // namespace cpyhwpx

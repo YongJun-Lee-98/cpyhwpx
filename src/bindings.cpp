@@ -357,6 +357,33 @@ PYBIND11_MODULE(cpyhwpx, m) {
                       "편집 모드")
 
         //=========================================================================
+        // COM 속성 접근 (Low-level API)
+        //=========================================================================
+        // Note: IDispatch* 반환 속성들 (Application, EngineProperties, ViewProperties,
+        //       XHwpMessageBox, XHwpODBC, XHwpWindows, HAction, HParameterSet)은
+        //       pybind11에서 직접 지원되지 않아 제외됨
+        .def_property_readonly("CLSID", &cpyhwpx::HwpWrapper::GetCLSID,
+                               "클래스 ID")
+        .def_property_readonly("CurFieldState", &cpyhwpx::HwpWrapper::GetCurFieldState,
+                               "현재 필드 상태 (0=본문, 1=셀, 4=글상자)")
+        .def_property_readonly("CurMetatagState", &cpyhwpx::HwpWrapper::GetCurMetatagState,
+                               "현재 메타태그 상태 (한글2024+)")
+        .def_property_readonly("IsPrivateInfoProtected", &cpyhwpx::HwpWrapper::GetIsPrivateInfoProtected,
+                               "개인정보 보호 여부")
+        .def_property_readonly("IsTrackChange", &cpyhwpx::HwpWrapper::GetIsTrackChange,
+                               "변경 추적 여부")
+        .def_property_readonly("Path", &cpyhwpx::HwpWrapper::GetDocPath,
+                               "문서 경로")
+        .def_property_readonly("SelectionMode", &cpyhwpx::HwpWrapper::GetSelectionMode,
+                               "선택 모드 (0=일반, 1=블록)")
+        .def_property_readonly("Title", &cpyhwpx::HwpWrapper::GetTitle,
+                               "창 제목")
+        .def_property_readonly("current_printpage", &cpyhwpx::HwpWrapper::GetCurrentPrintPage,
+                               "현재 인쇄 페이지 번호")
+        .def_property_readonly("current_font", &cpyhwpx::HwpWrapper::GetCurrentFont,
+                               "현재 폰트명")
+
+        //=========================================================================
         // 컨트롤 속성 (Control Properties)
         //=========================================================================
         .def_property_readonly("cur_selected_ctrl", &cpyhwpx::HwpWrapper::GetCurSelectedCtrl,

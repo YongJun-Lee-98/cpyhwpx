@@ -1,14 +1,14 @@
 # cpyhwpx 구현 현황 분석
 
-> **분석 일자**: 2025-12-21 (우선순위 API 14개 + 텍스트 검색 3개 추가)
+> **분석 일자**: 2025-12-21 (우선순위 API 14개 + 텍스트 검색 3개 + Core 속성 10개 추가)
 
 ## 요약
 
 | 구분 | 문서화 | 구현됨 | 구현률 |
 |-----|--------|--------|--------|
-| **총 API** | ~1,300+ | **~767** | **~59%** ✅ |
+| **총 API** | ~1,300+ | **~777** | **~60%** ✅ |
 | Core 클래스 | 4 | 4 | 100% ✅ |
-| 속성 | 35 | **12** | **34%** ✅ NEW |
+| 속성 | 35 | **22** | **63%** ✅ NEW |
 | **파일 I/O** | 26 | **15** | **58%** ✅ NEW |
 | **보안 모듈** | 4 | **4** | **100%** ✅ |
 | 텍스트 편집 | 35 | **19** | **54%** ✅ NEW |
@@ -39,7 +39,7 @@
 
 ### 2. Hwp 클래스 속성 (35개 문서화)
 
-#### ✅ 구현됨 (12개)
+#### ✅ 구현됨 (22개)
 - `version` - HWP 버전
 - `build_number` - 빌드 번호
 - `current_page` - 현재 페이지
@@ -47,36 +47,38 @@
 - `edit_mode` - 편집 모드 (읽기/쓰기)
 - `is_initialized` - 초기화 여부
 - `XHwpDocuments` - 문서 컬렉션
-- `head_ctrl` - 첫 번째 컨트롤 ✅ NEW
-- `last_ctrl` - 마지막 컨트롤 ✅ NEW
-- `parent_ctrl` - 부모 컨트롤 ✅ NEW
-- `cur_selected_ctrl` - 현재 선택된 컨트롤 ✅ NEW
-- `ctrl_list` - 모든 컨트롤 목록 ✅ NEW
+- `head_ctrl` - 첫 번째 컨트롤
+- `last_ctrl` - 마지막 컨트롤
+- `parent_ctrl` - 부모 컨트롤
+- `cur_selected_ctrl` - 현재 선택된 컨트롤
+- `ctrl_list` - 모든 컨트롤 목록
+- `CLSID` - 클래스 ID ✅ NEW
+- `CurFieldState` - 현재 필드 상태 (0=본문, 1=셀, 4=글상자) ✅ NEW
+- `CurMetatagState` - 현재 메타태그 상태 ✅ NEW
+- `IsPrivateInfoProtected` - 개인정보 보호 ✅ NEW
+- `IsTrackChange` - 변경 추적 ✅ NEW
+- `Path` - 문서 경로 ✅ NEW
+- `SelectionMode` - 선택 모드 (0=일반, 1=블록) ✅ NEW
+- `Title` - 창 제목 ✅ NEW
+- `current_printpage` - 현재 인쇄 페이지 ✅ NEW
+- `current_font` - 현재 폰트 ✅ NEW
 
-#### ❌ 미구현 (23개)
+#### ⚠️ 메서드로 구현됨 (4개)
+- `IsEmpty` → `is_empty()` 메서드
+- `IsModified` → `is_modified()` 메서드
+- `CharShape` → `get_charshape()`/`set_charshape()` 메서드
+- `ParaShape` → `get_parashape()`/`set_parashape()` 메서드
+
+#### ❌ 미구현 (9개) - IDispatch* 반환으로 pybind11 미지원
 - `Application` - Low-level API 접근
-- `CLSID` - 클래스 ID
-- `CurFieldState` - 현재 필드 상태
-- `CurMetatagState` - 현재 메타태그 상태
 - `EngineProperties` - 엔진 속성
-- `IsEmpty` - 빈 문서 여부 (메서드로만 존재)
-- `IsModified` - 수정 여부 (메서드로만 존재)
-- `IsPrivateInfoProtected` - 개인정보 보호
-- `IsTrackChange` - 변경 추적
-- `Path` - 문서 경로
-- `SelectionMode` - 선택 모드
-- `Title` - 창 제목
+- `ViewProperties` - 뷰 속성
 - `XHwpMessageBox` - 메시지 박스 객체
 - `XHwpODBC` - ODBC 객체
 - `XHwpWindows` - 창 관리 객체
-- `current_printpage` - 현재 인쇄 페이지
-- `current_font` - 현재 폰트
+- `HAction` - 액션 인터페이스 (내부적으로 사용됨)
+- `HParameterSet` - 파라미터셋 인터페이스 (내부적으로 사용됨)
 - `CellShape` - 셀 모양 파라미터셋
-- `CharShape` - 문자 모양 파라미터셋
-- `ParaShape` - 문단 모양 파라미터셋
-- `ViewProperties` - 뷰 속성
-- `HAction` - 액션 인터페이스
-- `HParameterSet` - 파라미터셋 인터페이스
 
 ---
 

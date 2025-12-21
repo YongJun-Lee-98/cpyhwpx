@@ -1027,6 +1027,90 @@ public:
     std::unique_ptr<XHwpDocument> AddDoc();
 
     //=========================================================================
+    // COM 속성 접근 (Low-level)
+    //=========================================================================
+
+    /**
+     * @brief Application 객체 접근 (Low-level API)
+     */
+    IDispatch* GetApplication();
+
+    /**
+     * @brief 클래스 ID
+     */
+    std::wstring GetCLSID();
+
+    /**
+     * @brief 현재 필드 상태 (0=본문, 1=셀, 4=글상자)
+     */
+    int GetCurFieldState();
+
+    /**
+     * @brief 현재 메타태그 상태 (한글2024+)
+     */
+    int GetCurMetatagState();
+
+    /**
+     * @brief 엔진 속성 객체
+     */
+    IDispatch* GetEngineProperties();
+
+    /**
+     * @brief 개인정보 보호 여부
+     */
+    bool GetIsPrivateInfoProtected();
+
+    /**
+     * @brief 변경 추적 여부
+     */
+    bool GetIsTrackChange();
+
+    /**
+     * @brief 문서 경로
+     */
+    std::wstring GetDocPath();
+
+    /**
+     * @brief 선택 모드 (0=일반, 1=블록)
+     */
+    int GetSelectionMode();
+
+    /**
+     * @brief 창 제목
+     */
+    std::wstring GetTitle();
+
+    /**
+     * @brief ViewProperties 객체 (getter)
+     */
+    IDispatch* GetViewProperties();
+
+    /**
+     * @brief ViewProperties 객체 (setter)
+     */
+    void SetViewProperties(IDispatch* props);
+
+    /**
+     * @brief XHwpMessageBox 객체
+     */
+    IDispatch* GetXHwpMessageBox();
+
+    /**
+     * @brief XHwpODBC 객체
+     */
+    IDispatch* GetXHwpODBC();
+
+    /**
+     * @brief XHwpWindows 객체
+     */
+    IDispatch* GetXHwpWindows();
+
+    /**
+     * @brief 현재 폰트명
+     */
+    std::wstring GetCurrentFont();
+
+    //=========================================================================
     // COM 인터페이스 직접 접근 (고급)
     //=========================================================================
 

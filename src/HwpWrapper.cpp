@@ -2084,9 +2084,184 @@ bool HwpWrapper::Find(const std::wstring& text,
                        bool regex,
                        bool replace_mode)
 {
-    // HAction을 통한 찾기 구현
-    // TODO: CreateAction("Find") 사용
-    return false;
+    if (!m_pHwp || text.empty()) return false;
+
+    HRESULT hr;
+    DISPID dispid;
+    VARIANT result;
+    VariantInit(&result);
+
+    // 1. HParameterSet 속성 가져오기
+    IDispatch* pHParameterSet = GetHParameterSet();
+    if (!pHParameterSet) return false;
+
+    // 2. HFindReplace 속성 가져오기
+    OLECHAR* findReplaceName = const_cast<OLECHAR*>(L"HFindReplace");
+    hr = pHParameterSet->GetIDsOfNames(IID_NULL, &findReplaceName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    VariantInit(&result);
+    hr = pHParameterSet->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHFindReplace = result.pdispVal;
+
+    // 3. HSet 속성 가져오기
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHFindReplace->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) {
+        pHFindReplace->Release();
+        return false;
+    }
+
+    IDispatch* pHSet = result.pdispVal;
+
+    // 4. HAction 가져오기
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pHSet->Release();
+        pHFindReplace->Release();
+        return false;
+    }
+
+    // 5. HAction.GetDefault("FindDlg", HSet) 호출하여 초기화
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT getDefaultArgs[2];
+        VariantInit(&getDefaultArgs[0]);
+        VariantInit(&getDefaultArgs[1]);
+        getDefaultArgs[0].vt = VT_DISPATCH;
+        getDefaultArgs[0].pdispVal = pHSet;
+        getDefaultArgs[1].vt = VT_BSTR;
+        getDefaultArgs[1].bstrVal = SysAllocString(L"FindDlg");
+
+        DISPPARAMS getDefaultParams = { getDefaultArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                         &getDefaultParams, &result, NULL, NULL);
+        SysFreeString(getDefaultArgs[1].bstrVal);
+    }
+
+    // 6. 파라미터 설정
+    DISPID putid = DISPID_PROPERTYPUT;
+
+    // FindString 설정
+    OLECHAR* findStringName = const_cast<OLECHAR*>(L"FindString");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &findStringName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_BSTR;
+        val.bstrVal = SysAllocString(text.c_str());
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+        SysFreeString(val.bstrVal);
+    }
+
+    // MatchCase 설정
+    OLECHAR* matchCaseName = const_cast<OLECHAR*>(L"MatchCase");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &matchCaseName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = match_case ? 1 : 0;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // FindRegExp 설정 (정규식)
+    OLECHAR* findRegExpName = const_cast<OLECHAR*>(L"FindRegExp");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &findRegExpName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = regex ? 1 : 0;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // Direction 설정 (0=Forward, 1=Backward)
+    OLECHAR* directionName = const_cast<OLECHAR*>(L"Direction");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &directionName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = forward ? 0 : 1;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // IgnoreMessage 설정 (메시지 무시)
+    OLECHAR* ignoreMsgName = const_cast<OLECHAR*>(L"IgnoreMessage");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &ignoreMsgName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = 1;  // 메시지 무시
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // ReplaceMode 설정
+    OLECHAR* replaceModeName = const_cast<OLECHAR*>(L"ReplaceMode");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &replaceModeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = replace_mode ? 1 : 0;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // 7. HAction.Execute("RepeatFind", HSet) 호출
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHSet->Release();
+        pHFindReplace->Release();
+        return false;
+    }
+
+    VARIANT executeArgs[2];
+    VariantInit(&executeArgs[0]);
+    VariantInit(&executeArgs[1]);
+    executeArgs[0].vt = VT_DISPATCH;
+    executeArgs[0].pdispVal = pHSet;
+    executeArgs[1].vt = VT_BSTR;
+    executeArgs[1].bstrVal = SysAllocString(L"RepeatFind");
+
+    DISPPARAMS executeParams = { executeArgs, NULL, 2, 0 };
+    VariantInit(&result);
+    hr = pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &executeParams, &result, NULL, NULL);
+    SysFreeString(executeArgs[1].bstrVal);
+
+    pHSet->Release();
+    pHFindReplace->Release();
+
+    return SUCCEEDED(hr) && (result.vt == VT_BOOL ? result.boolVal != VARIANT_FALSE : true);
 }
 
 bool HwpWrapper::Replace(const std::wstring& find_text,
@@ -2095,8 +2270,198 @@ bool HwpWrapper::Replace(const std::wstring& find_text,
                           bool match_case,
                           bool regex)
 {
-    // TODO: 구현
-    return false;
+    if (!m_pHwp) return false;
+
+    HRESULT hr;
+    DISPID dispid;
+    VARIANT result;
+    VariantInit(&result);
+
+    // 1. HParameterSet 속성 가져오기
+    IDispatch* pHParameterSet = GetHParameterSet();
+    if (!pHParameterSet) return false;
+
+    // 2. HFindReplace 속성 가져오기
+    OLECHAR* findReplaceName = const_cast<OLECHAR*>(L"HFindReplace");
+    hr = pHParameterSet->GetIDsOfNames(IID_NULL, &findReplaceName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return false;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    VariantInit(&result);
+    hr = pHParameterSet->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return false;
+
+    IDispatch* pHFindReplace = result.pdispVal;
+
+    // 3. HSet 속성 가져오기
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHFindReplace->Release();
+        return false;
+    }
+
+    VariantInit(&result);
+    hr = pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) {
+        pHFindReplace->Release();
+        return false;
+    }
+
+    IDispatch* pHSet = result.pdispVal;
+
+    // 4. HAction 가져오기
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pHSet->Release();
+        pHFindReplace->Release();
+        return false;
+    }
+
+    // 5. HAction.GetDefault("FindDlg", HSet) 호출하여 초기화
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT getDefaultArgs[2];
+        VariantInit(&getDefaultArgs[0]);
+        VariantInit(&getDefaultArgs[1]);
+        getDefaultArgs[0].vt = VT_DISPATCH;
+        getDefaultArgs[0].pdispVal = pHSet;
+        getDefaultArgs[1].vt = VT_BSTR;
+        getDefaultArgs[1].bstrVal = SysAllocString(L"FindDlg");
+
+        DISPPARAMS getDefaultParams = { getDefaultArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                         &getDefaultParams, &result, NULL, NULL);
+        SysFreeString(getDefaultArgs[1].bstrVal);
+    }
+
+    // 6. 파라미터 설정
+    DISPID putid = DISPID_PROPERTYPUT;
+
+    // FindString 설정
+    OLECHAR* findStringName = const_cast<OLECHAR*>(L"FindString");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &findStringName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_BSTR;
+        val.bstrVal = SysAllocString(find_text.c_str());
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+        SysFreeString(val.bstrVal);
+    }
+
+    // ReplaceString 설정
+    OLECHAR* replaceStringName = const_cast<OLECHAR*>(L"ReplaceString");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &replaceStringName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_BSTR;
+        val.bstrVal = SysAllocString(replace_text.c_str());
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+        SysFreeString(val.bstrVal);
+    }
+
+    // MatchCase 설정
+    OLECHAR* matchCaseName = const_cast<OLECHAR*>(L"MatchCase");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &matchCaseName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = match_case ? 1 : 0;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // FindRegExp 설정 (정규식)
+    OLECHAR* findRegExpName = const_cast<OLECHAR*>(L"FindRegExp");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &findRegExpName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = regex ? 1 : 0;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // Direction 설정 (0=Forward, 1=Backward)
+    OLECHAR* directionName = const_cast<OLECHAR*>(L"Direction");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &directionName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = forward ? 0 : 1;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // IgnoreMessage 설정 (메시지 무시)
+    OLECHAR* ignoreMsgName = const_cast<OLECHAR*>(L"IgnoreMessage");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &ignoreMsgName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = 1;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // ReplaceMode 설정
+    OLECHAR* replaceModeName = const_cast<OLECHAR*>(L"ReplaceMode");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &replaceModeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = 1;  // 바꾸기 모드
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // 7. HAction.Execute("ExecReplace", HSet) 호출
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHSet->Release();
+        pHFindReplace->Release();
+        return false;
+    }
+
+    VARIANT executeArgs[2];
+    VariantInit(&executeArgs[0]);
+    VariantInit(&executeArgs[1]);
+    executeArgs[0].vt = VT_DISPATCH;
+    executeArgs[0].pdispVal = pHSet;
+    executeArgs[1].vt = VT_BSTR;
+    executeArgs[1].bstrVal = SysAllocString(L"ExecReplace");
+
+    DISPPARAMS executeParams = { executeArgs, NULL, 2, 0 };
+    VariantInit(&result);
+    hr = pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &executeParams, &result, NULL, NULL);
+    SysFreeString(executeArgs[1].bstrVal);
+
+    pHSet->Release();
+    pHFindReplace->Release();
+
+    return SUCCEEDED(hr) && (result.vt == VT_BOOL ? result.boolVal != VARIANT_FALSE : true);
 }
 
 int HwpWrapper::ReplaceAll(const std::wstring& find_text,
@@ -2104,8 +2469,211 @@ int HwpWrapper::ReplaceAll(const std::wstring& find_text,
                             bool match_case,
                             bool regex)
 {
-    // TODO: 구현
-    return 0;
+    if (!m_pHwp || find_text.empty()) return 0;
+
+    HRESULT hr;
+    DISPID dispid;
+    VARIANT result;
+    VariantInit(&result);
+
+    // 1. HParameterSet 속성 가져오기
+    IDispatch* pHParameterSet = GetHParameterSet();
+    if (!pHParameterSet) return 0;
+
+    // 2. HFindReplace 속성 가져오기
+    OLECHAR* findReplaceName = const_cast<OLECHAR*>(L"HFindReplace");
+    hr = pHParameterSet->GetIDsOfNames(IID_NULL, &findReplaceName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) return 0;
+
+    DISPPARAMS noParams = { NULL, NULL, 0, 0 };
+    VariantInit(&result);
+    hr = pHParameterSet->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                 &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) return 0;
+
+    IDispatch* pHFindReplace = result.pdispVal;
+
+    // 3. HSet 속성 가져오기
+    OLECHAR* hsetName = const_cast<OLECHAR*>(L"HSet");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &hsetName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHFindReplace->Release();
+        return 0;
+    }
+
+    VariantInit(&result);
+    hr = pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET,
+                                &noParams, &result, NULL, NULL);
+    if (FAILED(hr) || result.vt != VT_DISPATCH) {
+        pHFindReplace->Release();
+        return 0;
+    }
+
+    IDispatch* pHSet = result.pdispVal;
+
+    // 4. HAction 가져오기
+    IDispatch* pHAction = GetHAction();
+    if (!pHAction) {
+        pHSet->Release();
+        pHFindReplace->Release();
+        return 0;
+    }
+
+    // 5. HAction.GetDefault("FindDlg", HSet) 호출하여 초기화
+    OLECHAR* getDefaultName = const_cast<OLECHAR*>(L"GetDefault");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &getDefaultName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT getDefaultArgs[2];
+        VariantInit(&getDefaultArgs[0]);
+        VariantInit(&getDefaultArgs[1]);
+        getDefaultArgs[0].vt = VT_DISPATCH;
+        getDefaultArgs[0].pdispVal = pHSet;
+        getDefaultArgs[1].vt = VT_BSTR;
+        getDefaultArgs[1].bstrVal = SysAllocString(L"FindDlg");
+
+        DISPPARAMS getDefaultParams = { getDefaultArgs, NULL, 2, 0 };
+        VariantInit(&result);
+        pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                         &getDefaultParams, &result, NULL, NULL);
+        SysFreeString(getDefaultArgs[1].bstrVal);
+    }
+
+    // 6. 파라미터 설정
+    DISPID putid = DISPID_PROPERTYPUT;
+
+    // FindString 설정
+    OLECHAR* findStringName = const_cast<OLECHAR*>(L"FindString");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &findStringName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_BSTR;
+        val.bstrVal = SysAllocString(find_text.c_str());
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+        SysFreeString(val.bstrVal);
+    }
+
+    // ReplaceString 설정
+    OLECHAR* replaceStringName = const_cast<OLECHAR*>(L"ReplaceString");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &replaceStringName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_BSTR;
+        val.bstrVal = SysAllocString(replace_text.c_str());
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+        SysFreeString(val.bstrVal);
+    }
+
+    // MatchCase 설정
+    OLECHAR* matchCaseName = const_cast<OLECHAR*>(L"MatchCase");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &matchCaseName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = match_case ? 1 : 0;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // FindRegExp 설정 (정규식)
+    OLECHAR* findRegExpName = const_cast<OLECHAR*>(L"FindRegExp");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &findRegExpName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = regex ? 1 : 0;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // IgnoreMessage 설정 (메시지 무시)
+    OLECHAR* ignoreMsgName = const_cast<OLECHAR*>(L"IgnoreMessage");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &ignoreMsgName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = 1;
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // ReplaceMode 설정
+    OLECHAR* replaceModeName = const_cast<OLECHAR*>(L"ReplaceMode");
+    hr = pHFindReplace->GetIDsOfNames(IID_NULL, &replaceModeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (SUCCEEDED(hr)) {
+        VARIANT val;
+        VariantInit(&val);
+        val.vt = VT_I4;
+        val.lVal = 1;  // 바꾸기 모드
+        DISPPARAMS params = { &val, &putid, 1, 1 };
+        pHFindReplace->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT,
+                               &params, NULL, NULL, NULL);
+    }
+
+    // 7. HAction.Execute("AllReplace", HSet) 호출
+    OLECHAR* executeName = const_cast<OLECHAR*>(L"Execute");
+    hr = pHAction->GetIDsOfNames(IID_NULL, &executeName, 1, LOCALE_USER_DEFAULT, &dispid);
+    if (FAILED(hr)) {
+        pHSet->Release();
+        pHFindReplace->Release();
+        return 0;
+    }
+
+    VARIANT executeArgs[2];
+    VariantInit(&executeArgs[0]);
+    VariantInit(&executeArgs[1]);
+    executeArgs[0].vt = VT_DISPATCH;
+    executeArgs[0].pdispVal = pHSet;
+    executeArgs[1].vt = VT_BSTR;
+    executeArgs[1].bstrVal = SysAllocString(L"AllReplace");
+
+    DISPPARAMS executeParams = { executeArgs, NULL, 2, 0 };
+    VariantInit(&result);
+    hr = pHAction->Invoke(dispid, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                          &executeParams, &result, NULL, NULL);
+    SysFreeString(executeArgs[1].bstrVal);
+
+    int replaceCount = 0;
+    if (SUCCEEDED(hr)) {
+        // 바꾼 개수 가져오기 (결과에서 또는 Count 속성에서)
+        if (result.vt == VT_I4) {
+            replaceCount = result.lVal;
+        } else if (result.vt == VT_BOOL && result.boolVal != VARIANT_FALSE) {
+            // 성공했지만 개수를 반환하지 않는 경우, Count 속성 확인
+            OLECHAR* countName = const_cast<OLECHAR*>(L"Count");
+            DISPID dispidCount;
+            if (SUCCEEDED(pHFindReplace->GetIDsOfNames(IID_NULL, &countName, 1,
+                                                        LOCALE_USER_DEFAULT, &dispidCount))) {
+                VARIANT countResult;
+                VariantInit(&countResult);
+                if (SUCCEEDED(pHFindReplace->Invoke(dispidCount, IID_NULL, LOCALE_USER_DEFAULT,
+                                                     DISPATCH_PROPERTYGET, &noParams,
+                                                     &countResult, NULL, NULL))) {
+                    if (countResult.vt == VT_I4) {
+                        replaceCount = countResult.lVal;
+                    }
+                }
+            }
+            // Count 속성이 없으면 최소 1개는 바뀐 것으로 간주
+            if (replaceCount == 0) replaceCount = 1;
+        }
+    }
+
+    pHSet->Release();
+    pHFindReplace->Release();
+
+    return replaceCount;
 }
 
 //=============================================================================

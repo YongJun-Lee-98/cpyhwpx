@@ -46,7 +46,7 @@ packages = ["cpyhwpx", "cpyhwpx._native"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-"cpyhwpx._native" = ["*.pyd"]
+"cpyhwpx._native" = ["*.pyd", "*.dll"]
 "cpyhwpx" = ["*.py"]
 
 [tool.pytest.ini_options]

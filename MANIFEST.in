@@ -1,6 +1,7 @@
 # Include package data
 recursive-include cpyhwpx *.py
 recursive-include cpyhwpx *.pyd
+recursive-include cpyhwpx *.dll
 
 # Include documentation
 include README.md

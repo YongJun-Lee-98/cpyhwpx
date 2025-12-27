@@ -160,14 +160,40 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("visible") = true,
              py::arg("new_instance") = true,
              py::arg("register_module") = true,
-             "HWP 자동화 객체 생성 (register_module=True: 보안 모듈 자동 등록)")
+             R"doc(
+아래아한글 자동화 객체를 생성합니다.
+
+Args:
+    visible: 한/글 창을 화면에 표시할지 여부. 기본값은 True (표시)
+    new_instance: 새 인스턴스 생성 여부. False면 기존 열린 한/글에 연결 시도
+    register_module: 보안 모듈 자동 등록 여부. 기본값은 True
+
+Examples:
+    >>> import cpyhwpx
+    >>> hwp = cpyhwpx.Hwp()  # 기본: 화면 표시, 보안 모듈 자동 등록
+    >>> hwp = cpyhwpx.Hwp(visible=False)  # 백그라운드 실행
+    >>> hwp = cpyhwpx.Hwp(new_instance=False)  # 기존 한/글에 연결
+)doc")
 
         // 초기화/종료
         .def("initialize", &cpyhwpx::HwpWrapper::Initialize,
-             "HWP COM 객체 초기화")
+             R"doc(
+HWP COM 객체를 초기화합니다.
+
+일반적으로 Hwp() 생성자에서 자동 호출되므로 직접 호출할 필요가 없습니다.
+)doc")
         .def("register_module", &cpyhwpx::HwpWrapper::RegisterModule,
              py::arg("module_type"), py::arg("module_data"),
-             "보안 모듈 등록")
+             R"doc(
+보안 모듈을 등록합니다.
+
+파일 저장/열기 등의 기능을 사용하려면 보안 모듈 등록이 필요합니다.
+Hwp(register_module=True)로 생성하면 자동으로 등록됩니다.
+
+Args:
+    module_type: 모듈 타입 (예: "FilePathCheckDLL")
+    module_data: 모듈 데이터 (예: "FilePathCheckerModule")
+)doc")
 
         // 보안 모듈 자동 등록
         .def_static("check_registry_key", &cpyhwpx::HwpWrapper::CheckRegistryKey,
@@ -186,30 +212,133 @@ PYBIND11_MODULE(cpyhwpx, m) {
 
         .def("quit", &cpyhwpx::HwpWrapper::Quit,
              py::arg("save") = false,
-             "HWP 종료")
+             R"doc(
+한/글 프로그램을 종료합니다.
+
+Args:
+    save: True면 변경된 문서를 저장 후 종료, False면 저장하지 않고 종료
+
+Examples:
+    >>> hwp.quit()  # 저장하지 않고 종료
+    >>> hwp.quit(save=True)  # 변경사항 저장 후 종료
+)doc")
         .def("is_initialized", &cpyhwpx::HwpWrapper::IsInitialized,
-             "초기화 완료 여부")
+             R"doc(
+HWP COM 객체가 초기화되었는지 확인합니다.
+
+Returns:
+    초기화 완료 시 True, 아니면 False
+)doc")
 
         // 파일 I/O
         .def("open", &cpyhwpx::HwpWrapper::Open,
              py::arg("filename"),
              py::arg("format") = L"",
              py::arg("arg") = L"",
-             "파일 열기")
+             R"doc(
+문서를 연다.
+
+Args:
+    filename: 문서 파일의 전체경로
+    format: 문서 형식. 빈 문자열을 지정하면 자동으로 인식한다.
+        - "HWP": 한/글 native format
+        - "HWP30": 한/글 3.X/96/97
+        - "HTML": 인터넷 문서
+        - "TEXT": 아스키 텍스트 문서
+        - "UNICODE": 유니코드 텍스트 문서
+        - "HWP20": 한글 2.0
+        - "HWPML2X": HWPML 2.X 문서
+        - "RTF": 서식 있는 텍스트 문서
+        - "OOXML": MS 워드 문서 (docx)
+    arg: 세부 옵션. 형식: "key:value;key:value;..."
+        - "lock:true": 파일을 오픈한 상태로 lock
+        - "notext:true": 헤더 정보만 읽기
+        - "template:true": 템플릿으로 오픈 (lock=FALSE)
+        - "suspendpassword:true": 암호 묻지 않음
+        - "forceopen:true": 읽기전용 대화상자 미표시
+        - "setcurdir:true": 파일 폴더로 현재 위치 변경
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.open("C:/문서/example.hwp")
+    >>> hwp.open("문서.hwpx", format="", arg="lock:false")
+)doc")
         .def("save", &cpyhwpx::HwpWrapper::Save,
              py::arg("save_if_dirty") = true,
-             "파일 저장")
+             R"doc(
+현재 편집중인 문서를 저장한다.
+
+문서의 경로가 지정되어있지 않으면 "새 이름으로 저장" 대화상자가 뜬다.
+
+Args:
+    save_if_dirty: True면 문서가 변경된 경우에만 저장, False면 무조건 저장
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.save()  # 변경 시에만 저장
+    >>> hwp.save(save_if_dirty=False)  # 무조건 저장
+)doc")
         .def("save_as", &cpyhwpx::HwpWrapper::SaveAs,
              py::arg("filename"),
              py::arg("format") = L"HWP",
              py::arg("arg") = L"",
-             "다른 이름으로 저장")
+             R"doc(
+현재 편집중인 문서를 지정한 이름으로 저장한다.
+
+Args:
+    filename: 문서 파일의 전체경로
+    format: 문서 형식. 기본값은 "HWP"
+        - "HWP", "HWPX", "HTML", "TEXT", "UNICODE", "PDF" 등
+    arg: 세부 옵션. 형식: "key:value;key:value;..."
+        - "lock:true": 저장 후 파일 lock 유지
+        - "backup:false": 백업 파일 생성 안 함
+        - "compress:true": 압축 여부
+        - "fullsave:false": 스토리지 완전 새로 생성
+        - "prvimage:2": 미리보기 이미지 (0=off, 1=BMP, 2=GIF)
+        - "prvtext:1": 미리보기 텍스트 (0=off, 1=on)
+        - "export": 다른 이름 저장 후 열린 문서는 유지
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.save_as("C:/문서/output.hwp")
+    >>> hwp.save_as("output.pdf", format="PDF")
+    >>> hwp.save_as("backup.hwp", arg="lock:false;backup:true")
+)doc")
         .def("clear", &cpyhwpx::HwpWrapper::Clear,
              py::arg("option") = 1,
-             "문서 초기화")
+             R"doc(
+현재 편집중인 문서의 내용을 닫고 빈문서 편집 상태로 돌아간다.
+
+Args:
+    option: 편집중인 문서의 내용에 대한 처리 방법
+        - 0: 변경 시 저장 여부 대화상자 표시 (hwpAskSave)
+        - 1: 문서 내용 버림 (hwpDiscard, 기본값)
+        - 2: 변경된 경우에만 저장 (hwpSaveIfDirty)
+        - 3: 무조건 저장 (hwpSave)
+
+Examples:
+    >>> hwp.clear()  # 내용 버리고 새 문서
+    >>> hwp.clear(option=0)  # 저장 여부 물어봄
+)doc")
         .def("close", &cpyhwpx::HwpWrapper::Close,
              py::arg("is_dirty") = false,
-             "문서 닫기")
+             R"doc(
+문서를 닫는다.
+
+새 문서가 필요하지 않다면 clear()를 사용하는 것이 더 효율적입니다.
+
+Args:
+    is_dirty: True면 변경사항이 있을 때 닫지 않음, False면 변경사항 버리고 닫음
+
+Returns:
+    문서창을 닫으면 True, 실패하면 False
+)doc")
         .def("insert_file", &cpyhwpx::HwpWrapper::InsertFile,
              py::arg("filename"),
              py::arg("keep_section") = 1,
@@ -217,16 +346,73 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("keep_parashape") = 1,
              py::arg("keep_style") = 1,
              py::arg("move_doc_end") = false,
-             "현재 위치에 파일 삽입 (keep_*: 1=유지, 0=무시)")
+             R"doc(
+현재 커서 위치에 외부 문서 파일을 삽입한다.
+
+Args:
+    filename: 삽입할 파일의 전체 경로
+    keep_section: 구역 설정 유지 (1=유지, 0=무시)
+    keep_charshape: 글자 모양 유지 (1=유지, 0=무시)
+    keep_parashape: 문단 모양 유지 (1=유지, 0=무시)
+    keep_style: 스타일 유지 (1=유지, 0=무시)
+    move_doc_end: True면 삽입 후 문서 끝으로 이동
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.insert_file("C:/문서/template.hwp")
+    >>> hwp.insert_file("내용.hwp", keep_charshape=0)  # 현재 문서 글자모양 적용
+)doc")
         .def("get_text_file", &cpyhwpx::HwpWrapper::GetTextFile,
              py::arg("format") = L"UNICODE",
              py::arg("option") = L"",
-             "문서 텍스트 추출 (format: HWP/HWPML2X/HTML/UNICODE/TEXT, option: saveblock:true=선택블록)")
+             R"doc(
+현재 열린 문서 전체 또는 선택한 범위를 문자열로 리턴한다.
+
+팁: Copy/Paste 대신 get_text_file/set_text_file 사용 권장
+
+Args:
+    format: 파일 형식 (기본값: "UNICODE")
+        - "HWP": HWP native format, BASE64 인코딩
+        - "HWPML2X": HWP 형식과 호환, 모든 정보 유지
+        - "HTML": 인터넷 문서 형식, 한/글 고유 서식 손실
+        - "UNICODE": 유니코드 텍스트, 서식 없음
+        - "TEXT": 일반 텍스트, 유니코드 정보 손실
+    option: "saveblock:true" 지정 시 선택 블록만 추출
+
+Returns:
+    지정된 포맷으로 변환된 문자열
+
+Examples:
+    >>> text = hwp.get_text_file()  # 전체 문서 텍스트
+    >>> text = hwp.get_text_file(format="HWPML2X")  # HWPML 형식
+    >>> text = hwp.get_text_file(option="saveblock:true")  # 선택 블록만
+)doc")
         .def("set_text_file", &cpyhwpx::HwpWrapper::SetTextFile,
              py::arg("data"),
              py::arg("format") = L"HWPML2X",
              py::arg("option") = L"insertfile",
-             "텍스트 데이터 삽입 (format: HWP/HWPML2X/HTML/UNICODE/TEXT)")
+             R"doc(
+GetTextFile로 저장한 문자열 정보를 문서에 삽입한다.
+
+Args:
+    data: 삽입할 문자열 데이터
+    format: 파일 형식 (기본값: "HWPML2X")
+        - "HWP": HWP native format, BASE64 인코딩
+        - "HWPML2X": HWP 형식과 호환
+        - "HTML": 인터넷 문서 형식
+        - "UNICODE": 유니코드 텍스트
+        - "TEXT": 일반 텍스트
+    option: "insertfile" 지정 시 현재 커서 위치에 삽입 (기본값)
+
+Returns:
+    성공하면 1, 실패하면 0
+
+Examples:
+    >>> content = hwp.get_text_file(format="HWPML2X")
+    >>> hwp.set_text_file(content, format="HWPML2X")
+)doc")
         .def("open_pdf", &cpyhwpx::HwpWrapper::OpenPdf,
              py::arg("pdf_path"),
              py::arg("this_window") = 1,
@@ -266,46 +452,249 @@ PYBIND11_MODULE(cpyhwpx, m) {
         // 텍스트 편집
         .def("insert_text", &cpyhwpx::HwpWrapper::InsertText,
              py::arg("text"),
-             "텍스트 삽입")
+             R"doc(
+한/글 문서 내 캐럿 위치에 문자열을 삽입한다.
+
+Args:
+    text: 삽입할 문자열
+
+Returns:
+    삽입 성공 시 True, 실패 시 False
+
+Examples:
+    >>> hwp.insert_text("Hello world!")
+    >>> hwp.insert_text("줄바꿈\n다음 줄")
+)doc")
         .def("get_text", &cpyhwpx::HwpWrapper::GetText,
-             "현재 위치의 텍스트 가져오기")
+             R"doc(
+문서 내에서 텍스트를 얻어온다.
+
+init_scan() 호출 후 반복 호출하여 문서 전체를 스캔한다.
+사용이 끝나면 release_scan()을 반드시 호출해야 한다.
+
+Returns:
+    (state, text) 튜플.
+    - state 0: 텍스트 정보 없음
+    - state 1: 리스트의 끝
+    - state 2: 일반 텍스트
+    - state 3: 다음 문단
+    - state 4: 제어문자 내부로 들어감
+    - state 5: 제어문자를 빠져나옴
+    - state 101: init_scan() 미실행
+    - state 102: 텍스트 변환 실패
+
+Examples:
+    >>> hwp.init_scan()
+    >>> while True:
+    ...     state, text = hwp.get_text()
+    ...     if state <= 1:
+    ...         break
+    ...     print(text)
+    >>> hwp.release_scan()
+)doc")
         .def("get_selected_text", &cpyhwpx::HwpWrapper::GetSelectedText,
              py::arg("keep_select") = false,
-             "선택된 텍스트 가져오기")
+             R"doc(
+한/글 문서 선택 구간의 텍스트를 리턴한다.
+
+표 안에 있을 때는 셀의 문자열을, 본문일 때는 선택 영역을 리턴.
+
+Args:
+    keep_select: True면 선택 상태 유지, False면 선택 해제
+
+Returns:
+    선택한 문자열
+)doc")
 
         // 위치 관리
         .def("get_pos", &cpyhwpx::HwpWrapper::GetPos,
-             "현재 위치 가져오기")
+             R"doc(
+캐럿의 위치를 얻어온다.
+
+Returns:
+    (List, Para, Pos) 튜플.
+    - List: 문서 내 리스트 ID (본문=0)
+    - Para: 문단 ID (0부터 시작)
+    - Pos: 문단 내 글자 위치 (0부터 시작)
+
+Examples:
+    >>> list_id, para, pos = hwp.get_pos()
+    >>> print(f"문단 {para}, 위치 {pos}")
+)doc")
         .def("set_pos", &cpyhwpx::HwpWrapper::SetPos,
              py::arg("list"), py::arg("para"), py::arg("pos"),
-             "위치 설정")
+             R"doc(
+캐럿을 문서 내 특정 위치로 옮긴다.
+
+Args:
+    list: 문서 내 리스트 ID (본문=0)
+    para: 문단 ID. 음수나 범위 초과 시 문서 시작으로 이동
+    pos: 문단 내 글자 위치. -1이면 해당 문단 끝으로 이동
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.set_pos(0, 0, 0)  # 본문 첫 문단 시작으로 이동
+    >>> hwp.set_pos(0, 2, -1)  # 세 번째 문단 끝으로 이동
+)doc")
         .def("move_pos", &cpyhwpx::HwpWrapper::MovePos,
              py::arg("move_id"), py::arg("para") = 0, py::arg("pos") = 0,
-             "위치 이동")
+             R"doc(
+캐럿의 위치를 옮긴다.
+
+Args:
+    move_id: 이동 위치 지정
+        - 0: 루트 리스트의 특정 위치 (para, pos 사용)
+        - 1: 현재 리스트의 특정 위치 (para, pos 사용)
+        - 2: 문서 시작으로 이동
+        - 3: 문서 끝으로 이동
+        - 4: 현재 리스트 시작
+        - 5: 현재 리스트 끝
+        - 6: 문단 시작
+        - 7: 문단 끝
+        - 8: 단어 시작
+        - 9: 단어 끝
+        - 10: 다음 문단 시작
+        - 11: 이전 문단 끝
+        - 12: 한 글자 뒤로
+        - 13: 한 글자 앞으로
+        - 16: 한 글자 뒤로 (현재 리스트)
+        - 17: 한 글자 앞으로 (현재 리스트)
+        - 18: 한 단어 뒤로
+        - 19: 한 단어 앞으로
+        - 20: 한 줄 아래로
+        - 21: 한 줄 위로
+        - 22: 줄 시작
+        - 23: 줄 끝
+        - 100~107: 셀 이동 (좌/우/상/하/행시작/행끝/열시작/열끝)
+        - 201: GetText() 실행 후 위치로 이동
+    para: move_id가 0 또는 1일 때 문단 번호
+    pos: move_id가 0 또는 1일 때 문자 위치
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.move_pos(2)  # 문서 시작으로
+    >>> hwp.move_pos(3)  # 문서 끝으로
+    >>> hwp.move_pos(1, 5, 0)  # 6번째 문단 시작으로
+)doc")
 
         // 텍스트 스캔/선택
         .def("init_scan", &cpyhwpx::HwpWrapper::InitScan,
              py::arg("option") = 0x07, py::arg("range") = 0x77,
              py::arg("spara") = 0, py::arg("spos") = 0,
              py::arg("epara") = -1, py::arg("epos") = -1,
-             "텍스트 스캔 초기화")
+             R"doc(
+문서의 내용을 검색하기 위해 초기설정을 한다.
+
+init_scan() -> get_text() 반복 -> release_scan() 순서로 사용.
+
+Args:
+    option: 찾을 대상 (기본값 0x07=모든 컨트롤)
+        - 0x00: 본문만 (서브리스트 제외)
+        - 0x01: char 타입 컨트롤 (줄바꿈, 문단끝 등)
+        - 0x02: inline 타입 컨트롤 (필드 끝 등)
+        - 0x04: extended 타입 컨트롤 (표, 그림 등)
+    range: 검색 범위 (기본값 0x77=문서 전체)
+        시작 위치 (상위 4비트):
+        - 0x00: 캐럿 위치부터
+        - 0x10: 특정 위치부터 (spara, spos 사용)
+        - 0x70: 문서 시작부터
+        끝 위치 (하위 4비트):
+        - 0x00: 캐럿 위치까지
+        - 0x01: 특정 위치까지 (epara, epos 사용)
+        - 0x07: 문서 끝까지
+        - 0xFF: 선택 블록 내에서만 검색
+    spara: 시작 문단 번호
+    spos: 시작 문자 위치
+    epara: 끝 문단 번호 (-1=끝까지)
+    epos: 끝 문자 위치 (-1=끝까지)
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.init_scan()  # 문서 전체 스캔
+    >>> hwp.init_scan(range=0xFF)  # 선택 블록만 스캔
+)doc")
         .def("release_scan", &cpyhwpx::HwpWrapper::ReleaseScan,
-             "텍스트 스캔 해제")
+             R"doc(
+init_scan()으로 설정된 초기화 정보를 해제한다.
+
+텍스트 검색 작업이 끝나면 반드시 호출해야 한다.
+)doc")
         .def("select_text", &cpyhwpx::HwpWrapper::SelectText,
              py::arg("spara"), py::arg("spos"),
              py::arg("epara"), py::arg("epos"),
              py::arg("slist") = 0,
-             "텍스트 선택")
+             R"doc(
+특정 범위의 텍스트를 블록 선택한다.
+
+epos가 가리키는 문자는 선택에 포함되지 않는다.
+
+Args:
+    spara: 블록 시작 문단 번호
+    spos: 블록 시작 문자 위치
+    epara: 블록 끝 문단 번호
+    epos: 블록 끝 문자 위치
+    slist: 리스트 ID (기본값 0=본문)
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.select_text(0, 0, 0, 10)  # 첫 문단 0~9번째 글자 선택
+    >>> hwp.select_text(2, 0, 2, -1)  # 세 번째 문단 전체 선택
+)doc")
         .def("select_text_by_get_pos", &cpyhwpx::HwpWrapper::SelectTextByGetPos,
              py::arg("s_pos"), py::arg("e_pos"),
-             "GetPos 튜플로 텍스트 선택")
+             R"doc(
+get_pos()로 얻은 튜플을 사용하여 텍스트를 선택한다.
+
+Args:
+    s_pos: 시작 위치 (list, para, pos) 튜플
+    e_pos: 끝 위치 (list, para, pos) 튜플
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> start = hwp.get_pos()
+    >>> # ... 이동 후
+    >>> end = hwp.get_pos()
+    >>> hwp.select_text_by_get_pos(start, end)
+)doc")
         .def("get_pos_by_set", &cpyhwpx::HwpWrapper::GetPosBySetPy,
-             "위치 저장 후 인덱스 반환 (-1: 실패)")
+             R"doc(
+현재 캐럿 위치를 내부 캐시에 저장하고 인덱스를 반환한다.
+
+Returns:
+    저장된 위치의 인덱스. 실패 시 -1
+
+Examples:
+    >>> idx = hwp.get_pos_by_set()  # 현재 위치 저장
+    >>> # ... 다른 작업 후
+    >>> hwp.set_pos_by_set(idx)  # 저장한 위치로 복원
+)doc")
         .def("set_pos_by_set", &cpyhwpx::HwpWrapper::SetPosBySetPy,
              py::arg("idx"),
-             "인덱스로 위치 복원")
+             R"doc(
+get_pos_by_set()으로 저장한 위치로 캐럿을 이동한다.
+
+Args:
+    idx: get_pos_by_set()이 반환한 인덱스
+
+Returns:
+    성공하면 True, 실패하면 False
+)doc")
         .def("clear_pos_cache", &cpyhwpx::HwpWrapper::ClearPosCache,
-             "위치 캐시 정리")
+             R"doc(
+get_pos_by_set()으로 저장한 모든 위치 정보를 삭제한다.
+
+메모리 관리를 위해 위치 저장이 많이 된 경우 호출 권장.
+)doc")
 
         // 창/UI 관리
         .def("set_visible", &cpyhwpx::HwpWrapper::SetVisible,
@@ -710,53 +1099,167 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("name"),
              py::arg("direction") = L"",
              py::arg("memo") = L"",
-             "누름틀 필드 생성")
+             R"doc(
+캐럿의 현재 위치에 누름틀 필드를 생성한다.
+
+Args:
+    name: 누름틀 필드의 이름 (중요: put_field_text 등에서 사용)
+    direction: 입력 전 보이는 안내문/지시문
+    memo: 필드에 대한 설명/도움말
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.create_field("name", direction="이름", memo="이름 입력 필드")
+    >>> hwp.put_field_text("name", "홍길동")
+)doc")
         .def("get_field_list", &cpyhwpx::HwpWrapper::GetFieldList,
              py::arg("number") = 1,
              py::arg("option") = 0,
-             "필드 목록 조회 (\\x02로 구분)")
+             R"doc(
+문서에 존재하는 필드의 목록을 구한다.
+
+Args:
+    number: 동일 이름 필드 처리 방식
+        - 0: 이름만 나열 (hwpFieldPlain)
+        - 1: 이름 뒤에 일련번호 {{#}} 추가 (hwpFieldNumber)
+        - 2: 이름 뒤에 개수 {{#}} 추가 (hwpFieldCount)
+    option: 필드 유형 필터
+        - 0: 모든 필드
+        - 0x01: 셀 필드만 (hwpFieldCell)
+        - 0x02: 누름틀 필드만 (hwpFieldClickHere)
+        - 0x04: 선택 영역 내 필드 (hwpFieldSelection)
+
+Returns:
+    필드 이름들을 \\x02로 구분한 문자열
+
+Examples:
+    >>> fields = hwp.get_field_list(1)  # "name{{0}}\x02addr{{0}}\x02tel{{0}}"
+)doc")
         .def("get_field_text", &cpyhwpx::HwpWrapper::GetFieldText,
              py::arg("field"),
              py::arg("idx") = 0,
-             "필드 텍스트 조회")
+             R"doc(
+지정한 필드에서 문자열을 구한다.
+
+Args:
+    field: 필드 이름
+    idx: 동일 이름 필드 중 몇 번째인지 (0부터 시작)
+
+Returns:
+    필드에 입력된 텍스트
+
+Examples:
+    >>> text = hwp.get_field_text("name")
+    >>> text = hwp.get_field_text("title", idx=1)  # 두 번째 title 필드
+)doc")
         .def("put_field_text", &cpyhwpx::HwpWrapper::PutFieldText,
              py::arg("field"),
              py::arg("text"),
-             "필드 텍스트 설정")
+             R"doc(
+지정한 필드의 내용을 채운다.
+
+기존 필드 내용은 지워지고, 필드에 지정된 글자모양이 적용된다.
+
+Args:
+    field: 필드 이름 (\\x02로 구분하여 여러 필드 지정 가능)
+    text: 채워 넣을 문자열 (\\x02로 구분하여 여러 텍스트 지정 가능)
+
+Examples:
+    >>> hwp.put_field_text("name", "홍길동")
+    >>> hwp.put_field_text("name\x02addr", "홍길동\x02서울시")
+)doc")
         .def("field_exist", &cpyhwpx::HwpWrapper::FieldExist,
              py::arg("field"),
-             "필드 존재 확인")
+             R"doc(
+필드가 문서에 존재하는지 확인한다.
+
+Args:
+    field: 필드 이름
+
+Returns:
+    존재하면 True, 없으면 False
+)doc")
         .def("move_to_field", &cpyhwpx::HwpWrapper::MoveToField,
              py::arg("field"),
              py::arg("idx") = 0,
              py::arg("text") = true,
              py::arg("start") = true,
              py::arg("select") = false,
-             "필드로 캐럿 이동")
+             R"doc(
+지정한 필드로 캐럿을 이동한다.
+
+Args:
+    field: 필드 이름. 이름 뒤에 {{#}}로 번호 지정 가능
+    idx: 동일 이름 필드 중 몇 번째인지 (0부터 시작)
+    text: True면 누름틀 내부 텍스트로, False면 누름틀 코드로 이동
+    start: True면 필드 처음으로, False면 끝으로 이동 (select=False일 때)
+    select: True면 필드 내용을 블록 선택
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.move_to_field("name")  # name 필드로 이동
+    >>> hwp.move_to_field("name", idx=1, select=True)  # 두 번째 name 필드 선택
+)doc")
         .def("rename_field", &cpyhwpx::HwpWrapper::RenameField,
              py::arg("oldname"),
              py::arg("newname"),
-             "필드 이름 변경")
+             R"doc(
+지정한 필드의 이름을 바꾼다.
+
+Args:
+    oldname: 기존 필드 이름 (\\x02로 구분하여 여러 필드 지정 가능)
+    newname: 새 필드 이름 (\\x02로 구분하여 여러 이름 지정 가능)
+
+Examples:
+    >>> hwp.rename_field("title", "heading")
+    >>> hwp.rename_field("old1\x02old2", "new1\x02new2")
+)doc")
         .def("get_cur_field_name", &cpyhwpx::HwpWrapper::GetCurFieldName,
              py::arg("option") = 0,
-             "현재 위치 필드 이름 조회")
+             R"doc(
+현재 캐럿 위치의 필드 이름을 조회한다.
+
+Args:
+    option: 조회 옵션
+
+Returns:
+    필드 이름. 필드가 없으면 빈 문자열
+)doc")
         .def("set_cur_field_name", &cpyhwpx::HwpWrapper::SetCurFieldName,
              py::arg("field"),
              py::arg("direction") = L"",
              py::arg("memo") = L"",
              py::arg("option") = 0,
-             "현재 셀 필드 이름 설정")
+             R"doc(
+현재 셀에 필드 이름을 설정한다.
+
+Args:
+    field: 필드 이름
+    direction: 안내문/지시문
+    memo: 설명/도움말
+    option: 설정 옵션
+)doc")
         .def("set_field_view_option", &cpyhwpx::HwpWrapper::SetFieldViewOption,
              py::arg("option"),
              "필드 뷰 옵션 설정")
         .def("delete_all_fields", &cpyhwpx::HwpWrapper::DeleteAllFields,
-             "모든 필드 삭제")
+             "모든 누름틀 필드를 삭제한다.")
         .def("delete_field_by_name", &cpyhwpx::HwpWrapper::DeleteFieldByName,
              py::arg("field_name"),
              py::arg("idx") = -1,
-             "이름으로 필드 삭제 (idx=-1이면 모든 동일 이름 필드)")
+             R"doc(
+이름으로 필드를 삭제한다.
+
+Args:
+    field_name: 삭제할 필드 이름
+    idx: 삭제할 필드 인덱스 (-1이면 동일 이름 필드 모두 삭제)
+)doc")
         .def("fields_to_map", &cpyhwpx::HwpWrapper::FieldsToMap,
-             "필드를 딕셔너리로 변환")
+             "문서의 모든 필드를 {필드명: 텍스트} 딕셔너리로 반환한다.")
 
         //=========================================================================
         // 테이블 작업 (Table Operations)
@@ -768,15 +1271,57 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("width_type") = 0,
              py::arg("height_type") = 0,
              py::arg("header") = false,
-             "테이블 생성 (rows, cols, treat_as_char, width_type, height_type, header)")
+             R"doc(
+표를 생성한다.
+
+기본적으로 rows와 cols만 지정하면 용지 여백을 제외한 너비에 맞춰 표가 생성된다.
+
+Args:
+    rows: 행 수 (기본값 2)
+    cols: 열 수 (기본값 2)
+    treat_as_char: 글자처럼 취급 여부 (True면 텍스트와 함께 이동)
+    width_type: 너비 정의 형식 (0=단에맞춤, 1=문단에맞춤, 2=임의값)
+    height_type: 높이 정의 형식 (0=자동, 1=임의값)
+    header: 1행을 제목행으로 설정
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.create_table(3, 4)  # 3행 4열 표 생성
+    >>> hwp.create_table(5, 2, header=True)  # 제목행 있는 5행 2열 표
+)doc")
         .def("get_into_nth_table", &cpyhwpx::HwpWrapper::GetIntoNthTable,
              py::arg("n") = 0,
              py::arg("select_cell") = false,
-             "n번째 테이블로 이동 (음수: 뒤에서부터)")
+             R"doc(
+n번째 테이블로 이동한다.
+
+Args:
+    n: 테이블 인덱스 (0부터 시작, 음수면 뒤에서부터)
+    select_cell: True면 첫 번째 셀을 선택
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.get_into_nth_table(0)  # 첫 번째 표로 이동
+    >>> hwp.get_into_nth_table(-1)  # 마지막 표로 이동
+)doc")
         .def("get_table_row_count", &cpyhwpx::HwpWrapper::GetTableRowCount,
-             "테이블 행 개수 조회 (-1: 테이블 아님)")
+             R"doc(
+현재 커서가 위치한 테이블의 행 개수를 반환한다.
+
+Returns:
+    행 개수. 테이블 안이 아니면 -1
+)doc")
         .def("get_table_col_count", &cpyhwpx::HwpWrapper::GetTableColCount,
-             "테이블 열 개수 조회 (-1: 테이블 아님)")
+             R"doc(
+현재 커서가 위치한 테이블의 열 개수를 반환한다.
+
+Returns:
+    열 개수. 테이블 안이 아니면 -1
+)doc")
         .def("table_left_cell", &cpyhwpx::HwpWrapper::TableLeftCell,
              "왼쪽 셀로 이동")
         .def("table_right_cell", &cpyhwpx::HwpWrapper::TableRightCell,
@@ -786,22 +1331,33 @@ PYBIND11_MODULE(cpyhwpx, m) {
         .def("table_lower_cell", &cpyhwpx::HwpWrapper::TableLowerCell,
              "아래쪽 셀로 이동")
         .def("table_right_cell_append", &cpyhwpx::HwpWrapper::TableRightCellAppend,
-             "오른쪽 셀로 이동 (행 끝이면 다음 행)")
+             "오른쪽 셀로 이동 (행 끝이면 다음 행 첫 셀로 이동)")
         .def("table_col_begin", &cpyhwpx::HwpWrapper::TableColBegin,
-             "첫 번째 열로 이동")
+             "현재 행의 첫 번째 열로 이동")
         .def("table_col_end", &cpyhwpx::HwpWrapper::TableColEnd,
-             "마지막 열로 이동")
+             "현재 행의 마지막 열로 이동")
         .def("table_col_page_up", &cpyhwpx::HwpWrapper::TableColPageUp,
-             "열의 맨 위로 이동")
+             "현재 열의 맨 위 셀로 이동")
         .def("table_cell_block_extend_abs", &cpyhwpx::HwpWrapper::TableCellBlockExtendAbs,
-             "셀 블록 선택 확장 (절대)")
+             "셀 블록 선택 확장 (절대 위치 기준)")
         .def("cancel", &cpyhwpx::HwpWrapper::Cancel,
-             "선택 취소 (ESC)")
+             "현재 선택을 취소한다 (ESC 키와 동일)")
         .def("cell_fill", &cpyhwpx::HwpWrapper::CellFill,
              py::arg("r") = 217,
              py::arg("g") = 217,
              py::arg("b") = 217,
-             "셀 배경색 채우기 (기본: 연한 회색)")
+             R"doc(
+현재 셀의 배경색을 설정한다.
+
+Args:
+    r: 빨강 (0-255, 기본값 217)
+    g: 초록 (0-255, 기본값 217)
+    b: 파랑 (0-255, 기본값 217)
+
+Examples:
+    >>> hwp.cell_fill()  # 연한 회색
+    >>> hwp.cell_fill(255, 255, 0)  # 노란색
+)doc")
         .def("table_from_data", &cpyhwpx::HwpWrapper::TableFromData,
              py::arg("data"),
              py::arg("treat_as_char") = false,
@@ -810,37 +1366,111 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("cell_fill_r") = -1,
              py::arg("cell_fill_g") = -1,
              py::arg("cell_fill_b") = -1,
-             "2D 리스트 데이터로 테이블 생성")
+             R"doc(
+2차원 리스트 데이터로 테이블을 생성한다.
+
+Args:
+    data: 2차원 리스트 [[row1_col1, row1_col2], [row2_col1, row2_col2], ...]
+    treat_as_char: 글자처럼 취급 여부
+    header: 첫 행을 제목행으로 설정
+    header_bold: 제목행 볼드 처리
+    cell_fill_r/g/b: 제목행 배경색 RGB (-1이면 기본값)
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> data = [["이름", "나이"], ["홍길동", "30"], ["김철수", "25"]]
+    >>> hwp.table_from_data(data, header=True)
+)doc")
 
         .def("get_table_xml", &cpyhwpx::HwpWrapper::GetTableXml,
-             "현재 커서 위치의 테이블 XML 추출 (HWPML2X 형식)")
+             "현재 커서 위치의 테이블을 HWPML2X XML 문자열로 추출한다.")
 
         //=========================================================================
         // 스타일 관리 (CharShape/ParaShape)
         //=========================================================================
         .def("get_charshape", &cpyhwpx::HwpWrapper::GetCharShape,
-             "현재 글자모양 속성 가져오기 (dict 반환)")
+             R"doc(
+현재 캐럿 위치의 글자모양 속성을 dict로 반환한다.
+
+set_charshape()에 전달하여 다른 위치에 동일한 글자모양을 적용할 수 있다.
+
+Returns:
+    글자모양 속성 딕셔너리 (FaceNameHangul, Height, Bold 등)
+)doc")
         .def("set_charshape", &cpyhwpx::HwpWrapper::SetCharShape,
              py::arg("props"),
-             "글자모양 속성 설정 (dict)")
+             R"doc(
+글자모양 속성을 설정한다.
+
+get_charshape()으로 얻은 dict 또는 직접 생성한 dict를 전달.
+
+Args:
+    props: 글자모양 속성 딕셔너리
+
+Examples:
+    >>> shape = hwp.get_charshape()
+    >>> shape["Bold"] = 1
+    >>> hwp.set_charshape(shape)
+)doc")
         .def("set_font", &cpyhwpx::HwpWrapper::SetFont,
              py::arg("face_name") = L"",
              py::arg("height") = -1,
              py::arg("bold") = -1,
              py::arg("italic") = -1,
              py::arg("text_color") = -1,
-             "글자모양 간편 설정 (face_name: 글꼴, height: pt*100, bold/italic: 0=해제,1=설정,-1=미변경)")
+             R"doc(
+글자모양을 간편하게 설정한다.
+
+Args:
+    face_name: 글꼴 이름 (빈 문자열이면 미변경)
+    height: 글자 크기 (포인트 * 100, 예: 10pt = 1000). -1이면 미변경
+    bold: 굵게 (0=해제, 1=설정, -1=미변경)
+    italic: 기울임 (0=해제, 1=설정, -1=미변경)
+    text_color: 글자색 RGB (0xBBGGRR 형식). -1이면 미변경
+
+Examples:
+    >>> hwp.set_font("맑은 고딕", height=1200, bold=1)  # 맑은 고딕 12pt 굵게
+    >>> hwp.set_font(text_color=0x0000FF)  # 빨간색 글자
+)doc")
         .def("get_parashape", &cpyhwpx::HwpWrapper::GetParaShape,
-             "현재 문단모양 속성 가져오기 (dict 반환)")
+             R"doc(
+현재 캐럿이 위치한 문단의 문단모양 속성을 dict로 반환한다.
+
+set_parashape()에 전달하여 다른 문단에 동일한 문단모양을 적용할 수 있다.
+
+Returns:
+    문단모양 속성 딕셔너리 (Align, LineSpacing, LeftMargin 등)
+)doc")
         .def("set_parashape", &cpyhwpx::HwpWrapper::SetParaShape,
              py::arg("props"),
-             "문단모양 속성 설정 (dict)")
+             R"doc(
+문단모양 속성을 설정한다.
+
+get_parashape()으로 얻은 dict 또는 직접 생성한 dict를 전달.
+
+Args:
+    props: 문단모양 속성 딕셔너리
+)doc")
         .def("set_para", &cpyhwpx::HwpWrapper::SetPara,
              py::arg("align_type") = -1,
              py::arg("line_spacing") = -1,
              py::arg("left_margin") = -1,
              py::arg("indentation") = -1,
-             "문단모양 간편 설정 (align_type: 0=양쪽,1=왼쪽,2=가운데,3=오른쪽)")
+             R"doc(
+문단모양을 간편하게 설정한다.
+
+Args:
+    align_type: 정렬 (0=양쪽, 1=왼쪽, 2=가운데, 3=오른쪽). -1이면 미변경
+    line_spacing: 줄간격 (%). -1이면 미변경
+    left_margin: 왼쪽 여백 (HwpUnit). -1이면 미변경
+    indentation: 들여쓰기 (HwpUnit). -1이면 미변경
+
+Examples:
+    >>> hwp.set_para(align_type=2)  # 가운데 정렬
+    >>> hwp.set_para(line_spacing=160)  # 줄간격 160%
+)doc")
 
         //=========================================================================
         // 이미지 삽입 (Image Insertion)
@@ -854,7 +1484,30 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("effect") = 0,
              py::arg("width") = 0,
              py::arg("height") = 0,
-             "이미지 삽입 (sizeoption: 0=원본, 1=지정크기, 2=셀맞춤, 3=셀맞춤+종횡비)")
+             R"doc(
+현재 커서 위치에 이미지를 삽입한다.
+
+Args:
+    path: 이미지 파일 경로
+    embedded: True면 문서에 포함, False면 링크
+    sizeoption: 크기 옵션
+        - 0: 원본 크기
+        - 1: 지정 크기 (width, height 사용)
+        - 2: 셀에 맞춤 (표 안에서)
+        - 3: 셀에 맞춤 + 종횡비 유지
+    reverse: 색상 반전
+    watermark: 워터마크로 삽입
+    effect: 그림 효과 (0=없음)
+    width: 너비 (sizeoption=1일 때, HwpUnit)
+    height: 높이 (sizeoption=1일 때, HwpUnit)
+
+Returns:
+    성공하면 True, 실패하면 False
+
+Examples:
+    >>> hwp.insert_picture("C:/images/photo.jpg")
+    >>> hwp.insert_picture("logo.png", sizeoption=2)  # 셀에 맞춤
+)doc")
 
         //=========================================================================
         // 텍스트 편집 확장 (Text Editing Extended)
@@ -864,7 +1517,17 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("format") = L"",
              py::arg("arg") = L"",
              py::arg("move_doc_end") = false,
-             "파일 끼워넣기 (move_doc_end=True: 삽입 후 문서 끝으로 이동)")
+             R"doc(
+현재 커서 위치에 파일 내용을 끼워넣는다.
+
+insert_file()과 유사하지만 더 간단한 인터페이스.
+
+Args:
+    path: 삽입할 파일 경로
+    format: 파일 형식 (빈 문자열이면 자동 인식)
+    arg: 추가 옵션
+    move_doc_end: True면 삽입 후 문서 끝으로 이동
+)doc")
         .def("insert_background_picture", &cpyhwpx::HwpWrapper::InsertBackgroundPicture,
              py::arg("path"),
              py::arg("border_type") = L"SelectedCell",
@@ -874,23 +1537,50 @@ PYBIND11_MODULE(cpyhwpx, m) {
              py::arg("watermark") = false,
              py::arg("brightness") = 0,
              py::arg("contrast") = 0,
-             "배경 그림 삽입 (border_type: SelectedCell, Page 등)")
+             R"doc(
+배경 그림을 삽입한다.
+
+Args:
+    path: 이미지 파일 경로
+    border_type: 적용 범위 ("SelectedCell", "Page" 등)
+    embedded: True면 문서에 포함
+    fill_option: 채우기 옵션 (5=채우기)
+    effect: 그림 효과
+    watermark: 워터마크로 삽입
+    brightness: 밝기 조절 (-100~100)
+    contrast: 대비 조절 (-100~100)
+)doc")
         .def("move_to_metatag", &cpyhwpx::HwpWrapper::MoveToMetatag,
              py::arg("tag"),
              py::arg("text") = L"",
              py::arg("start") = true,
              py::arg("select") = false,
-             "메타태그로 이동")
+             "지정한 메타태그 위치로 캐럿을 이동한다.")
         .def("clear_field_text", &cpyhwpx::HwpWrapper::ClearFieldText,
-             "모든 필드 텍스트 초기화")
+             "문서 내 모든 필드의 텍스트를 비운다.")
         .def("insert_hyperlink", &cpyhwpx::HwpWrapper::InsertHyperlink,
              py::arg("hypertext"),
              py::arg("description") = L"",
-             "하이퍼링크 삽입")
+             R"doc(
+선택한 문자열에 하이퍼링크를 삽입한다.
+
+Args:
+    hypertext: 링크 대상 (책갈피 이름 또는 URL)
+    description: 툴팁으로 표시될 설명
+
+Returns:
+    성공하면 True, 실패하면 False
+)doc")
         .def("insert_memo", &cpyhwpx::HwpWrapper::InsertMemo,
              py::arg("text") = L"",
              py::arg("memo_type") = L"memo",
-             "메모 삽입 (memo_type: 'memo' 또는 'revision')")
+             R"doc(
+현재 위치에 메모를 삽입한다.
+
+Args:
+    text: 메모 내용
+    memo_type: "memo" (일반 메모) 또는 "revision" (교정 메모)
+)doc")
         .def("compose_chars", &cpyhwpx::HwpWrapper::ComposeChars,
              py::arg("chars") = L"",
              py::arg("char_size") = -3,

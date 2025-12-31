@@ -1,0 +1,803 @@
+# HWP Automation Presets - Table Operations
+# 표 생성, 셀 이동, 데이터 입력, 병합/분할 등 표 관련 작업
+# Version: 1.0.0
+
+presets:
+  # ============================================
+  # 표 이동/진입
+  # ============================================
+  - id: table_goto_nth
+    name: "n번째 표로 이동"
+    description: "문서 내 n번째 표로 커서를 이동합니다. 0부터 시작하며 음수 인덱스(-1은 마지막 표)를 지원합니다."
+    category: table
+
+    preconditions:
+      check_method: "GetCtrlList"
+      note: "문서에 표가 존재해야 함"
+
+    actions:
+      - type: method
+        action: "GetIntoNthTable"
+        params:
+          n: "{{index|0}}"
+          select_cell: "{{select_cell|false}}"
+        description: "n번째 표 안으로 이동"
+
+    postconditions:
+      cursor_position: "표의 첫 번째 셀 내부"
+      expected_state: "IsCell() == true"
+
+    examples:
+      - scenario: "첫 번째 표로 이동"
+        code: |
+          hwp.GetIntoNthTable(0)
+      - scenario: "마지막 표로 이동"
+        code: |
+          hwp.GetIntoNthTable(-1)
+      - scenario: "두 번째 표로 이동하며 셀 선택"
+        code: |
+          hwp.GetIntoNthTable(1, select_cell=True)
+
+    error_handling:
+      common_errors:
+        - error: "표를 찾을 수 없음"
+          cause: "문서에 표가 없거나 인덱스가 범위를 벗어남"
+          solution: |
+            ctrls = hwp.GetCtrlList()
+            tables = [c for c in ctrls if c.CtrlID == 'tbl']
+            print(f"표 개수: {len(tables)}")
+
+  - id: table_goto_first
+    name: "첫 번째 표로 이동"
+    description: "문서의 첫 번째 표로 빠르게 이동합니다."
+    category: table
+
+    preconditions:
+      check_method: "GetCtrlList"
+
+    actions:
+      - type: method
+        action: "GetIntoNthTable"
+        params:
+          n: 0
+        description: "첫 번째 표로 이동"
+
+    postconditions:
+      cursor_position: "첫 번째 표의 첫 번째 셀"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.GetIntoNthTable(0)
+
+  - id: table_goto_last
+    name: "마지막 표로 이동"
+    description: "문서의 마지막 표로 이동합니다."
+    category: table
+
+    preconditions:
+      check_method: "GetCtrlList"
+
+    actions:
+      - type: method
+        action: "GetIntoNthTable"
+        params:
+          n: -1
+        description: "마지막 표로 이동"
+
+    postconditions:
+      cursor_position: "마지막 표의 첫 번째 셀"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.GetIntoNthTable(-1)
+
+  # ============================================
+  # 셀 이동
+  # ============================================
+  - id: table_cell_move
+    name: "셀 이동"
+    description: "표 안에서 지정된 방향으로 셀을 이동합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+      check_method: "IsCell"
+
+    actions:
+      - type: run
+        action: "{{direction}}"
+        description: "지정된 방향으로 이동"
+
+    examples:
+      - scenario: "왼쪽 셀로 이동"
+        code: |
+          hwp.run("TableLeftCell")
+      - scenario: "오른쪽 셀로 이동"
+        code: |
+          hwp.run("TableRightCell")
+      - scenario: "위쪽 셀로 이동"
+        code: |
+          hwp.run("TableUpperCell")
+      - scenario: "아래쪽 셀로 이동"
+        code: |
+          hwp.run("TableLowerCell")
+
+    available_directions:
+      - TableLeftCell      # 왼쪽 셀
+      - TableRightCell     # 오른쪽 셀
+      - TableUpperCell     # 위쪽 셀
+      - TableLowerCell     # 아래쪽 셀
+      - TableColBegin      # 행 첫 셀
+      - TableColEnd        # 행 마지막 셀
+      - TableColPageUp     # 열 맨 위
+      - TableColPageDown   # 열 맨 아래
+      - TableRightCellAppend  # 오른쪽 (없으면 다음 행)
+
+  - id: table_move_to_cell
+    name: "특정 셀로 이동"
+    description: "표의 특정 위치(행, 열)로 커서를 이동합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableColPageUp"
+        description: "열 맨 위로"
+      - type: run
+        action: "TableColBegin"
+        description: "행 처음으로"
+      - type: loop
+        description: "행 이동"
+        actions:
+          - type: run
+            action: "TableLowerCell"
+        count: "{{row}}"
+      - type: loop
+        description: "열 이동"
+        actions:
+          - type: run
+            action: "TableRightCell"
+        count: "{{col}}"
+
+    examples:
+      - scenario: "2행 3열로 이동 (0-based)"
+        code: |
+          # 먼저 좌상단으로 이동
+          hwp.run("TableColPageUp")
+          hwp.run("TableColBegin")
+          # 행 이동
+          for _ in range(2):
+              hwp.run("TableLowerCell")
+          # 열 이동
+          for _ in range(3):
+              hwp.run("TableRightCell")
+
+  # ============================================
+  # 표 생성
+  # ============================================
+  - id: table_create
+    name: "표 생성"
+    description: "현재 커서 위치에 지정된 크기의 표를 생성합니다."
+    category: table
+
+    preconditions:
+      note: "문서가 열려 있어야 함"
+
+    actions:
+      - type: method
+        action: "CreateTable"
+        params:
+          rows: "{{rows|2}}"
+          cols: "{{cols|2}}"
+          treat_as_char: "{{treat_as_char|true}}"
+          header: "{{header|true}}"
+        description: "표 생성"
+
+    postconditions:
+      cursor_position: "생성된 표의 첫 번째 셀"
+
+    examples:
+      - scenario: "3x4 표 생성"
+        code: |
+          hwp.CreateTable(3, 4)
+      - scenario: "헤더 없는 2x2 표 생성"
+        code: |
+          hwp.CreateTable(2, 2, header=False)
+
+  - id: table_from_data
+    name: "데이터로 표 생성"
+    description: "2차원 리스트 데이터로 표를 생성하고 데이터를 채웁니다."
+    category: table
+
+    preconditions:
+      note: "문서가 열려 있어야 함"
+
+    actions:
+      - type: method
+        action: "TableFromData"
+        params:
+          data: "{{data}}"
+          has_header: "{{has_header|true}}"
+        description: "데이터로 표 생성"
+
+    examples:
+      - scenario: "딕셔너리 데이터로 표 생성"
+        code: |
+          data = [
+              ["이름", "나이", "직급"],
+              ["김철수", "30", "팀장"],
+              ["이영희", "28", "사원"]
+          ]
+          hwp.TableFromData(data)
+
+  # ============================================
+  # 데이터 입력
+  # ============================================
+  - id: table_fill_cell
+    name: "현재 셀에 텍스트 입력"
+    description: "현재 커서가 있는 셀에 텍스트를 입력합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+      check_method: "IsCell"
+
+    actions:
+      - type: method
+        action: "InsertText"
+        params:
+          text: "{{content}}"
+        description: "텍스트 삽입"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.InsertText("내용")
+
+  - id: table_fill_row
+    name: "행에 데이터 입력"
+    description: "현재 행의 각 셀에 순차적으로 데이터를 입력합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableColBegin"
+        description: "행 처음으로 이동"
+      - type: loop
+        description: "각 데이터 입력"
+        actions:
+          - type: method
+            action: "InsertText"
+            params:
+              text: "{{item}}"
+          - type: run
+            action: "TableRightCell"
+
+    examples:
+      - scenario: "행에 데이터 입력"
+        code: |
+          hwp.run("TableColBegin")
+          for item in ["A", "B", "C"]:
+              hwp.InsertText(item)
+              hwp.run("TableRightCell")
+
+  - id: table_fill_sequential
+    name: "표 순차 입력"
+    description: "좌상단부터 데이터를 순차적으로 입력합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableColPageUp"
+        description: "열 맨 위로"
+      - type: run
+        action: "TableColBegin"
+        description: "행 처음으로"
+      - type: loop
+        description: "순차 입력"
+        actions:
+          - type: method
+            action: "InsertText"
+            params:
+              text: "{{item}}"
+          - type: run
+            action: "TableRightCellAppend"
+            description: "다음 셀 (행 끝이면 다음 행)"
+
+    examples:
+      - scenario: "2D 데이터 순차 입력"
+        code: |
+          hwp.run("TableColPageUp")
+          hwp.run("TableColBegin")
+          data = ["A", "B", "C", "1", "2", "3"]
+          for item in data:
+              hwp.InsertText(item)
+              hwp.run("TableRightCellAppend")
+
+  # ============================================
+  # 셀 선택/블록
+  # ============================================
+  - id: table_select_cell
+    name: "현재 셀 블록 선택"
+    description: "현재 커서가 있는 셀을 블록 선택 상태로 만듭니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "TableCellBlock"
+        description: "셀 블록 모드"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableCellBlock")
+
+  - id: table_select_row
+    name: "현재 행 선택"
+    description: "현재 커서가 있는 행 전체를 선택합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableCellBlockRow"
+        description: "행 전체 선택"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableCellBlockRow")
+
+  - id: table_select_col
+    name: "현재 열 선택"
+    description: "현재 커서가 있는 열 전체를 선택합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableCellBlockCol"
+        description: "열 전체 선택"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableCellBlockCol")
+
+  - id: table_select_range
+    name: "셀 범위 선택"
+    description: "현재 셀부터 지정된 범위만큼 확장하여 선택합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "TableCellBlock"
+        description: "셀 블록 모드"
+      - type: loop
+        description: "범위 확장"
+        actions:
+          - type: run
+            action: "TableCellBlockExtend"
+
+    examples:
+      - scenario: "2x3 범위 선택"
+        code: |
+          hwp.run("TableCellBlock")
+          # 오른쪽으로 2칸
+          for _ in range(2):
+              hwp.run("TableRightCell")  # 선택 확장
+          # 아래로 2칸
+          for _ in range(2):
+              hwp.run("TableLowerCell")  # 선택 확장
+
+  # ============================================
+  # 셀 병합/분할
+  # ============================================
+  - id: table_merge_cells
+    name: "선택 셀 병합"
+    description: "현재 선택된 셀들을 병합합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+      has_selection: true
+      note: "셀이 블록 선택되어 있어야 함"
+
+    actions:
+      - type: run
+        action: "TableMergeCell"
+        description: "셀 병합"
+
+    postconditions:
+      cursor_position: "병합된 셀 내부"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          # 먼저 셀 범위 선택 후
+          hwp.run("TableMergeCell")
+
+    error_handling:
+      common_errors:
+        - error: "병합 실패"
+          cause: "셀이 선택되지 않음"
+          solution: "TableCellBlock으로 셀을 먼저 선택하세요"
+
+  - id: table_split_cell
+    name: "셀 분할"
+    description: "현재 셀을 지정된 개수로 분할합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "TableSplitCell"
+        params:
+          div_hor: "{{cols|2}}"
+          div_ver: "{{rows|1}}"
+        description: "셀 분할"
+
+    examples:
+      - scenario: "가로로 2분할"
+        code: |
+          hwp.run("TableSplitCell")  # 대화상자 사용
+      - scenario: "프로그래밍 방식 분할"
+        code: |
+          # TableSplitCell 파라미터 설정 필요
+          pset = hwp.CreateSet("TableSplit")
+          pset.SetItem("DivHor", 2)
+          pset.SetItem("DivVer", 1)
+          hwp.Execute("TableSplitCell", pset)
+
+  # ============================================
+  # 행/열 추가/삭제
+  # ============================================
+  - id: table_add_row
+    name: "행 추가"
+    description: "현재 위치에 새 행을 추가합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableAppendRow"
+        description: "행 추가"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableAppendRow")
+
+  - id: table_delete_row
+    name: "행 삭제"
+    description: "현재 행을 삭제합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableSubtractRow"
+        description: "행 삭제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableSubtractRow")
+
+  - id: table_delete_cell
+    name: "셀 삭제"
+    description: "현재 셀을 삭제합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "TableDeleteCell"
+        description: "셀 삭제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableDeleteCell")
+
+  # ============================================
+  # 셀 서식
+  # ============================================
+  - id: table_cell_fill_color
+    name: "셀 배경색 설정"
+    description: "현재 셀 또는 선택된 셀의 배경색을 설정합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: method
+        action: "CellFill"
+        params:
+          r: "{{r|217}}"
+          g: "{{g|217}}"
+          b: "{{b|217}}"
+        description: "배경색 적용"
+
+    examples:
+      - scenario: "회색 배경"
+        code: |
+          hwp.CellFill(217, 217, 217)
+      - scenario: "노란색 배경"
+        code: |
+          hwp.CellFill(255, 255, 0)
+      - scenario: "하늘색 배경"
+        code: |
+          hwp.CellFill(135, 206, 235)
+
+  - id: table_cell_align
+    name: "셀 정렬"
+    description: "셀 내용의 정렬을 설정합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "{{align_action}}"
+        description: "정렬 적용"
+
+    available_alignments:
+      # 수평+수직 조합
+      - TableCellAlignLeftTop        # 왼쪽 위
+      - TableCellAlignLeftCenter     # 왼쪽 가운데
+      - TableCellAlignLeftBottom     # 왼쪽 아래
+      - TableCellAlignCenterTop      # 가운데 위
+      - TableCellAlignCenterCenter   # 가운데 가운데
+      - TableCellAlignCenterBottom   # 가운데 아래
+      - TableCellAlignRightTop       # 오른쪽 위
+      - TableCellAlignRightCenter    # 오른쪽 가운데
+      - TableCellAlignRightBottom    # 오른쪽 아래
+
+    examples:
+      - scenario: "가운데 정렬"
+        code: |
+          hwp.run("TableCellAlignCenterCenter")
+
+  - id: table_cell_border
+    name: "셀 테두리 설정"
+    description: "셀의 테두리를 설정합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "{{border_action}}"
+        description: "테두리 적용"
+
+    available_borders:
+      - TableCellBorderAll        # 모든 테두리
+      - TableCellBorderNo         # 테두리 없음
+      - TableCellBorderOutside    # 바깥 테두리
+      - TableCellBorderInside     # 안쪽 테두리
+      - TableCellBorderTop        # 위쪽 테두리
+      - TableCellBorderBottom     # 아래쪽 테두리
+      - TableCellBorderLeft       # 왼쪽 테두리
+      - TableCellBorderRight      # 오른쪽 테두리
+
+    examples:
+      - scenario: "모든 테두리"
+        code: |
+          hwp.run("TableCellBorderAll")
+      - scenario: "테두리 제거"
+        code: |
+          hwp.run("TableCellBorderNo")
+
+  - id: table_set_header_style
+    name: "헤더 행 스타일 적용"
+    description: "표의 첫 번째 행을 헤더로 스타일링합니다 (배경색 + 볼드 + 가운데 정렬)."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableColPageUp"
+        description: "열 맨 위로"
+      - type: run
+        action: "TableColBegin"
+        description: "행 처음으로"
+      - type: run
+        action: "TableCellBlockRow"
+        description: "행 전체 선택"
+      - type: method
+        action: "CellFill"
+        params:
+          r: 217
+          g: 217
+          b: 217
+        description: "배경색 적용"
+      - type: run
+        action: "CharShapeBold"
+        description: "볼드 적용"
+      - type: run
+        action: "TableCellAlignCenterCenter"
+        description: "가운데 정렬"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableColPageUp")
+          hwp.run("TableColBegin")
+          hwp.run("TableCellBlockRow")
+          hwp.CellFill(217, 217, 217)
+          hwp.run("CharShapeBold")
+          hwp.run("TableCellAlignCenterCenter")
+
+  # ============================================
+  # 표 자동 기능
+  # ============================================
+  - id: table_auto_sum
+    name: "자동 합계"
+    description: "셀에 자동 합계 수식을 삽입합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "TableFormulaSumAuto"
+        description: "자동 합계"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableFormulaSumAuto")
+
+  - id: table_sum_horizontal
+    name: "가로 합계"
+    description: "같은 행의 셀들의 합계를 계산합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "TableFormulaSumHor"
+        description: "가로 합계"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableFormulaSumHor")
+
+  - id: table_sum_vertical
+    name: "세로 합계"
+    description: "같은 열의 셀들의 합계를 계산합니다."
+    category: table
+
+    preconditions:
+      cursor_in_cell: true
+
+    actions:
+      - type: run
+        action: "TableFormulaSumVer"
+        description: "세로 합계"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableFormulaSumVer")
+
+  - id: table_distribute_width
+    name: "열 너비 균등 분배"
+    description: "선택된 열들의 너비를 균등하게 분배합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "TableDistributeCellWidth"
+        description: "너비 균등 분배"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableDistributeCellWidth")
+
+  - id: table_distribute_height
+    name: "행 높이 균등 분배"
+    description: "선택된 행들의 높이를 균등하게 분배합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "TableDistributeCellHeight"
+        description: "높이 균등 분배"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("TableDistributeCellHeight")
+
+  # ============================================
+  # 표 정보 조회
+  # ============================================
+  - id: table_get_size
+    name: "표 크기 조회"
+    description: "현재 표의 행/열 개수를 조회합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: method
+        action: "GetTableRowCount"
+        description: "행 개수 조회"
+      - type: method
+        action: "GetTableColCount"
+        description: "열 개수 조회"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          rows = hwp.GetTableRowCount()
+          cols = hwp.GetTableColCount()
+          print(f"표 크기: {rows}행 x {cols}열")
+
+  - id: table_get_xml
+    name: "표 XML 추출"
+    description: "현재 표를 XML 형식으로 추출합니다."
+    category: table
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: method
+        action: "GetTableXml"
+        description: "XML 추출"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          xml = hwp.GetTableXml()
+          print(xml)

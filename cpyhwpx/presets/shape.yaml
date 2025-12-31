@@ -1,0 +1,597 @@
+# HWP Automation Presets - Shape & Object Operations
+# 이미지, 도형, 개체 삽입 및 조작
+# Version: 1.0.0
+
+presets:
+  # ============================================
+  # 이미지 삽입
+  # ============================================
+  - id: shape_insert_image
+    name: "이미지 삽입"
+    description: "현재 위치에 이미지를 삽입합니다."
+    category: shape
+
+    preconditions:
+      note: "문서가 열려 있어야 함"
+
+    actions:
+      - type: method
+        action: "InsertPicture"
+        params:
+          path: "{{image_path}}"
+          embedded: "{{embedded|true}}"
+          sizeoption: "{{size_option|0}}"
+          width: "{{width|0}}"
+          height: "{{height|0}}"
+        description: "이미지 삽입"
+
+    size_options:
+      0: "원본 크기"
+      1: "지정 크기"
+      2: "셀 크기에 맞춤 (비율 유지)"
+      3: "셀 크기에 맞춤 (비율 무시)"
+
+    examples:
+      - scenario: "원본 크기로 삽입"
+        code: |
+          hwp.InsertPicture("C:/images/logo.png")
+      - scenario: "셀 크기에 맞춤 (비율 유지)"
+        code: |
+          hwp.InsertPicture("C:/images/photo.jpg", sizeoption=2)
+      - scenario: "지정 크기로 삽입 (50mm x 30mm)"
+        code: |
+          hwp.InsertPicture("C:/images/image.png", sizeoption=1,
+                           width=50*283, height=30*283)  # mm to HWP unit
+
+    error_handling:
+      common_errors:
+        - error: "이미지 파일을 찾을 수 없음"
+          cause: "경로가 잘못되었거나 파일이 없음"
+          solution: "파일 경로와 확장자를 확인하세요"
+
+  - id: shape_insert_image_in_cell
+    name: "셀에 이미지 삽입"
+    description: "표 셀에 맞춰 이미지를 삽입합니다."
+    category: shape
+
+    preconditions:
+      cursor_in_cell: true
+      check_method: "IsCell"
+
+    actions:
+      - type: method
+        action: "InsertPicture"
+        params:
+          path: "{{image_path}}"
+          sizeoption: 2
+        description: "셀에 맞춰 이미지 삽입"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          # 셀 안에서 실행
+          hwp.InsertPicture("C:/images/photo.jpg", sizeoption=2)
+
+  # ============================================
+  # 개체 선택
+  # ============================================
+  - id: shape_select
+    name: "개체 선택"
+    description: "특정 개체를 선택합니다."
+    category: shape
+
+    actions:
+      - type: method
+        action: "SelectCtrl"
+        params:
+          pCtrl: "{{control}}"
+        description: "컨트롤 선택"
+
+    examples:
+      - scenario: "첫 번째 그림 선택"
+        code: |
+          ctrls = hwp.GetCtrlList()
+          pics = [c for c in ctrls if c.CtrlID == 'pic']
+          if pics:
+              hwp.SelectCtrl(pics[0])
+
+  - id: shape_select_by_index
+    name: "인덱스로 개체 선택"
+    description: "n번째 개체를 선택합니다."
+    category: shape
+
+    actions:
+      - type: method
+        action: "GetCtrlList"
+        description: "컨트롤 목록 조회"
+      - type: method
+        action: "SelectCtrl"
+        params:
+          pCtrl: "{{ctrl_list[index]}}"
+        description: "인덱스로 선택"
+
+    examples:
+      - scenario: "두 번째 그림 선택"
+        code: |
+          ctrls = hwp.GetCtrlList()
+          pics = [c for c in ctrls if c.CtrlID == 'pic']
+          if len(pics) > 1:
+              hwp.SelectCtrl(pics[1])
+
+  - id: shape_deselect
+    name: "개체 선택 해제"
+    description: "현재 선택된 개체의 선택을 해제합니다."
+    category: shape
+
+    actions:
+      - type: run
+        action: "UnSelectCtrl"
+        description: "선택 해제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("UnSelectCtrl")
+
+  # ============================================
+  # 개체 삭제
+  # ============================================
+  - id: shape_delete
+    name: "개체 삭제"
+    description: "선택된 개체를 삭제합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+      note: "개체가 선택되어 있어야 함"
+
+    actions:
+      - type: run
+        action: "ShapeObjDelete"
+        description: "개체 삭제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ShapeObjDelete")
+
+  - id: shape_delete_by_index
+    name: "인덱스로 개체 삭제"
+    description: "n번째 개체를 삭제합니다."
+    category: shape
+
+    actions:
+      - type: method
+        action: "GetCtrlList"
+        description: "컨트롤 목록 조회"
+      - type: method
+        action: "SelectCtrl"
+        params:
+          pCtrl: "{{target}}"
+        description: "대상 선택"
+      - type: run
+        action: "ShapeObjDelete"
+        description: "삭제"
+
+    examples:
+      - scenario: "첫 번째 그림 삭제"
+        code: |
+          ctrls = hwp.GetCtrlList()
+          pics = [c for c in ctrls if c.CtrlID == 'pic']
+          if pics:
+              hwp.SelectCtrl(pics[0])
+              hwp.run("ShapeObjDelete")
+
+  # ============================================
+  # 개체 크기 조절
+  # ============================================
+  - id: shape_resize
+    name: "개체 크기 조절"
+    description: "선택된 개체의 크기를 조절합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "{{resize_action}}"
+        description: "크기 조절"
+
+    available_resizes:
+      - ShapeObjResizeUp       # 위로 확대
+      - ShapeObjResizeDown     # 아래로 확대
+      - ShapeObjResizeLeft     # 왼쪽으로 확대
+      - ShapeObjResizeRight    # 오른쪽으로 확대
+      - ShapeObjReduceUp       # 위로 축소
+      - ShapeObjReduceDown     # 아래로 축소
+      - ShapeObjReduceLeft     # 왼쪽으로 축소
+      - ShapeObjReduceRight    # 오른쪽으로 축소
+
+    examples:
+      - scenario: "위로 확대"
+        code: |
+          hwp.run("ShapeObjResizeUp")
+      - scenario: "모든 방향으로 축소"
+        code: |
+          hwp.run("ShapeObjReduceUp")
+          hwp.run("ShapeObjReduceDown")
+          hwp.run("ShapeObjReduceLeft")
+          hwp.run("ShapeObjReduceRight")
+
+  # ============================================
+  # 개체 이동
+  # ============================================
+  - id: shape_move
+    name: "개체 이동"
+    description: "선택된 개체를 이동합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "{{move_action}}"
+        description: "개체 이동"
+
+    available_moves:
+      - ShapeObjMoveUp         # 위로 이동
+      - ShapeObjMoveDown       # 아래로 이동
+      - ShapeObjMoveLeft       # 왼쪽으로 이동
+      - ShapeObjMoveRight      # 오른쪽으로 이동
+      - ShapeObjMoveUpMore     # 위로 크게 이동
+      - ShapeObjMoveDownMore   # 아래로 크게 이동
+      - ShapeObjMoveLeftMore   # 왼쪽으로 크게 이동
+      - ShapeObjMoveRightMore  # 오른쪽으로 크게 이동
+
+    examples:
+      - scenario: "왼쪽으로 이동"
+        code: |
+          hwp.run("ShapeObjMoveLeft")
+      - scenario: "위로 크게 이동"
+        code: |
+          hwp.run("ShapeObjMoveUpMore")
+
+  # ============================================
+  # 개체 정렬
+  # ============================================
+  - id: shape_align
+    name: "개체 정렬"
+    description: "선택된 개체를 정렬합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "{{align_action}}"
+        description: "정렬"
+
+    available_alignments:
+      - ShapeObjAlignLeft      # 왼쪽 정렬
+      - ShapeObjAlignCenter    # 가운데 정렬
+      - ShapeObjAlignRight     # 오른쪽 정렬
+      - ShapeObjAlignTop       # 위쪽 정렬
+      - ShapeObjAlignMiddle    # 중간 정렬
+      - ShapeObjAlignBottom    # 아래쪽 정렬
+
+    examples:
+      - scenario: "가운데 정렬"
+        code: |
+          hwp.run("ShapeObjAlignCenter")
+      - scenario: "페이지 중앙에 배치"
+        code: |
+          hwp.run("ShapeObjAlignCenter")
+          hwp.run("ShapeObjAlignMiddle")
+
+  # ============================================
+  # 개체 순서
+  # ============================================
+  - id: shape_order
+    name: "개체 순서 변경"
+    description: "선택된 개체의 앞뒤 순서를 변경합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "{{order_action}}"
+        description: "순서 변경"
+
+    available_orders:
+      - ShapeObjBringToFront   # 맨 앞으로
+      - ShapeObjSendToBack     # 맨 뒤로
+      - ShapeObjBringForward   # 앞으로
+      - ShapeObjSendBackward   # 뒤로
+
+    examples:
+      - scenario: "맨 앞으로"
+        code: |
+          hwp.run("ShapeObjBringToFront")
+      - scenario: "맨 뒤로"
+        code: |
+          hwp.run("ShapeObjSendToBack")
+
+  # ============================================
+  # 캡션
+  # ============================================
+  - id: shape_add_caption
+    name: "캡션 추가"
+    description: "선택된 개체에 캡션을 추가합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "ShapeObjAttachCaption"
+        description: "캡션 추가"
+      - type: run
+        action: "SelectAll"
+        description: "캡션 내용 전체 선택"
+      - type: run
+        action: "Delete"
+        description: "기본 텍스트 삭제"
+      - type: method
+        action: "InsertText"
+        params:
+          text: "{{caption_text}}"
+        description: "캡션 텍스트 입력"
+      - type: run
+        action: "CloseEx"
+        description: "캡션 편집 종료"
+
+    examples:
+      - scenario: "기본 캡션 추가"
+        code: |
+          hwp.run("ShapeObjAttachCaption")
+          hwp.run("SelectAll")
+          hwp.run("Delete")
+          hwp.InsertText("그림 1. 시스템 구성도")
+          hwp.run("CloseEx")
+
+  - id: shape_caption_with_number
+    name: "번호가 있는 캡션 추가"
+    description: "자동 번호가 포함된 캡션을 추가합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "ShapeObjAttachCaption"
+        description: "캡션 추가"
+      - type: run
+        action: "SelectAll"
+        description: "전체 선택"
+      - type: run
+        action: "Delete"
+        description: "기본 텍스트 삭제"
+      - type: method
+        action: "InsertText"
+        params:
+          text: "{{prefix|그림 }}"
+        description: "접두사 입력"
+      - type: run
+        action: "ShapeObjInsertCaptionNum"
+        description: "캡션 번호 삽입"
+      - type: method
+        action: "InsertText"
+        params:
+          text: "{{suffix|. }}"
+        description: "접미사 입력"
+      - type: method
+        action: "InsertText"
+        params:
+          text: "{{description}}"
+        description: "설명 입력"
+      - type: run
+        action: "CloseEx"
+        description: "편집 종료"
+
+    examples:
+      - scenario: "그림 캡션 추가"
+        code: |
+          hwp.run("ShapeObjAttachCaption")
+          hwp.run("SelectAll")
+          hwp.run("Delete")
+          hwp.InsertText("그림 ")
+          hwp.run("ShapeObjInsertCaptionNum")
+          hwp.InsertText(". 시스템 구성도")
+          hwp.run("CloseEx")
+
+  # ============================================
+  # 개체 속성
+  # ============================================
+  - id: shape_get_properties
+    name: "개체 속성 조회"
+    description: "선택된 개체의 속성을 조회합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: method
+        action: "GetCurSelectedCtrl"
+        description: "선택된 컨트롤 조회"
+
+    examples:
+      - scenario: "속성 조회"
+        code: |
+          ctrl = hwp.GetCurSelectedCtrl()
+          if ctrl:
+              print(f"ID: {ctrl.CtrlID}")
+              print(f"Type: {ctrl.CtrlType}")
+
+  - id: shape_edit_properties
+    name: "개체 속성 대화상자"
+    description: "개체 속성 대화상자를 엽니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "ShapeObjDialog"
+        description: "속성 대화상자"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ShapeObjDialog")
+
+  # ============================================
+  # 개체 그룹
+  # ============================================
+  - id: shape_group
+    name: "개체 그룹"
+    description: "선택된 여러 개체를 그룹화합니다."
+    category: shape
+
+    preconditions:
+      has_selection: true
+      note: "여러 개체가 선택되어 있어야 함"
+
+    actions:
+      - type: run
+        action: "ShapeObjGroup"
+        description: "그룹화"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ShapeObjGroup")
+
+  - id: shape_ungroup
+    name: "그룹 해제"
+    description: "그룹화된 개체를 해제합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "ShapeObjUngroup"
+        description: "그룹 해제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ShapeObjUngroup")
+
+  # ============================================
+  # 개체 복사/붙여넣기
+  # ============================================
+  - id: shape_copy
+    name: "개체 복사"
+    description: "선택된 개체를 복사합니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "Copy"
+        description: "복사"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Copy")
+
+  - id: shape_cut
+    name: "개체 잘라내기"
+    description: "선택된 개체를 잘라냅니다."
+    category: shape
+
+    preconditions:
+      control_selected: "gso"
+
+    actions:
+      - type: run
+        action: "Cut"
+        description: "잘라내기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Cut")
+
+  - id: shape_paste
+    name: "개체 붙여넣기"
+    description: "복사한 개체를 붙여넣습니다."
+    category: shape
+
+    actions:
+      - type: run
+        action: "Paste"
+        description: "붙여넣기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Paste")
+
+  # ============================================
+  # 도형 삽입
+  # ============================================
+  - id: shape_insert_line
+    name: "선 삽입"
+    description: "문서에 선을 삽입합니다."
+    category: shape
+
+    actions:
+      - type: method
+        action: "InsertCtrl"
+        params:
+          ctrl_id: "lin"
+        description: "선 삽입"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.InsertCtrl("lin")
+
+  - id: shape_insert_rectangle
+    name: "사각형 삽입"
+    description: "문서에 사각형을 삽입합니다."
+    category: shape
+
+    actions:
+      - type: method
+        action: "InsertCtrl"
+        params:
+          ctrl_id: "rec"
+        description: "사각형 삽입"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.InsertCtrl("rec")
+
+  - id: shape_insert_ellipse
+    name: "타원 삽입"
+    description: "문서에 타원을 삽입합니다."
+    category: shape
+
+    actions:
+      - type: method
+        action: "InsertCtrl"
+        params:
+          ctrl_id: "ell"
+        description: "타원 삽입"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.InsertCtrl("ell")

@@ -1,0 +1,702 @@
+# HWP Automation Presets - Text Editing
+# 텍스트 편집, 서식 적용, 찾기/바꾸기 등 텍스트 관련 작업
+# Version: 1.0.0
+
+presets:
+  # ============================================
+  # 텍스트 삽입
+  # ============================================
+  - id: text_insert
+    name: "텍스트 삽입"
+    description: "현재 커서 위치에 텍스트를 삽입합니다."
+    category: text
+
+    preconditions:
+      note: "문서가 열려 있어야 함"
+
+    actions:
+      - type: method
+        action: "InsertText"
+        params:
+          text: "{{content}}"
+        description: "텍스트 삽입"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.InsertText("안녕하세요")
+      - scenario: "여러 줄 삽입"
+        code: |
+          hwp.InsertText("첫 번째 줄\r\n두 번째 줄")
+
+  - id: text_insert_formatted
+    name: "서식 텍스트 삽입"
+    description: "특정 서식을 적용하여 텍스트를 삽입합니다."
+    category: text
+
+    preconditions:
+      note: "문서가 열려 있어야 함"
+
+    actions:
+      - type: method
+        action: "SetFont"
+        params:
+          face_name: "{{font_name|맑은 고딕}}"
+          height: "{{font_size|1000}}"
+          bold: "{{bold|0}}"
+          italic: "{{italic|0}}"
+        description: "폰트 설정"
+      - type: method
+        action: "InsertText"
+        params:
+          text: "{{content}}"
+        description: "텍스트 삽입"
+
+    examples:
+      - scenario: "굵은 글씨로 삽입"
+        code: |
+          hwp.SetFont("맑은 고딕", 1200, bold=1)
+          hwp.InsertText("중요 내용")
+      - scenario: "기울임 12pt로 삽입"
+        code: |
+          hwp.SetFont("맑은 고딕", 1200, italic=1)
+          hwp.InsertText("강조 텍스트")
+
+  - id: text_insert_break
+    name: "줄바꿈/문단 나누기"
+    description: "줄바꿈 또는 문단 나누기를 삽입합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "{{break_type}}"
+        description: "나누기 삽입"
+
+    available_break_types:
+      - BreakLine      # 줄 나누기 (Shift+Enter)
+      - BreakPara      # 문단 나누기 (Enter)
+      - BreakPage      # 페이지 나누기
+      - BreakColumn    # 단 나누기
+      - BreakSection   # 구역 나누기
+
+    examples:
+      - scenario: "문단 나누기"
+        code: |
+          hwp.run("BreakPara")
+      - scenario: "페이지 나누기"
+        code: |
+          hwp.run("BreakPage")
+
+  # ============================================
+  # 텍스트 조회
+  # ============================================
+  - id: text_get_all
+    name: "전체 텍스트 추출"
+    description: "문서의 전체 텍스트를 추출합니다."
+    category: text
+
+    actions:
+      - type: method
+        action: "GetText"
+        description: "전체 텍스트 추출"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          status, text = hwp.GetText()
+          print(text)
+
+  - id: text_get_selected
+    name: "선택 텍스트 추출"
+    description: "현재 선택된 텍스트를 추출합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: method
+        action: "GetSelectedText"
+        description: "선택 텍스트 추출"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          selected = hwp.GetSelectedText()
+          print(selected)
+
+  # ============================================
+  # 텍스트 선택
+  # ============================================
+  - id: text_select_all
+    name: "전체 선택"
+    description: "문서의 모든 내용을 선택합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "SelectAll"
+        description: "전체 선택"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("SelectAll")
+
+  - id: text_select_paragraph
+    name: "현재 문단 선택"
+    description: "현재 커서가 있는 문단 전체를 선택합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "MoveParaBegin"
+        description: "문단 시작으로"
+      - type: run
+        action: "MoveSelParaEnd"
+        description: "문단 끝까지 선택"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("MoveParaBegin")
+          hwp.run("MoveSelParaEnd")
+
+  - id: text_select_line
+    name: "현재 줄 선택"
+    description: "현재 커서가 있는 줄 전체를 선택합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "MoveLineBegin"
+        description: "줄 시작으로"
+      - type: run
+        action: "MoveSelLineEnd"
+        description: "줄 끝까지 선택"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("MoveLineBegin")
+          hwp.run("MoveSelLineEnd")
+
+  - id: text_select_word
+    name: "현재 단어 선택"
+    description: "현재 커서가 있는 단어를 선택합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "MoveWordBegin"
+        description: "단어 시작으로"
+      - type: run
+        action: "MoveSelWordEnd"
+        description: "단어 끝까지 선택"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("MoveWordBegin")
+          hwp.run("MoveSelWordEnd")
+
+  - id: text_cancel_selection
+    name: "선택 취소"
+    description: "현재 선택을 취소합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "Cancel"
+        description: "선택 취소"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Cancel")
+
+  # ============================================
+  # 찾기/바꾸기
+  # ============================================
+  - id: text_find
+    name: "텍스트 찾기"
+    description: "문서에서 텍스트를 찾습니다."
+    category: text
+
+    actions:
+      - type: method
+        action: "Find"
+        params:
+          text: "{{search_text}}"
+          forward: "{{forward|true}}"
+        description: "텍스트 찾기"
+
+    examples:
+      - scenario: "앞으로 찾기"
+        code: |
+          found = hwp.Find("검색어")
+      - scenario: "뒤로 찾기"
+        code: |
+          found = hwp.Find("검색어", forward=False)
+
+  - id: text_find_forward
+    name: "앞으로 찾기"
+    description: "현재 위치에서 앞으로 텍스트를 찾습니다."
+    category: text
+
+    actions:
+      - type: method
+        action: "FindForward"
+        params:
+          text: "{{search_text}}"
+        description: "앞으로 찾기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          found = hwp.FindForward("검색어")
+
+  - id: text_find_backward
+    name: "뒤로 찾기"
+    description: "현재 위치에서 뒤로 텍스트를 찾습니다."
+    category: text
+
+    actions:
+      - type: method
+        action: "FindBackward"
+        params:
+          text: "{{search_text}}"
+        description: "뒤로 찾기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          found = hwp.FindBackward("검색어")
+
+  - id: text_replace
+    name: "바꾸기"
+    description: "찾은 텍스트를 다른 텍스트로 바꿉니다."
+    category: text
+
+    actions:
+      - type: method
+        action: "Replace"
+        params:
+          find_text: "{{find_text}}"
+          replace_text: "{{replace_text}}"
+        description: "바꾸기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.Replace("찾을 텍스트", "바꿀 텍스트")
+
+  - id: text_replace_all
+    name: "모두 바꾸기"
+    description: "문서의 모든 해당 텍스트를 바꿉니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "MoveDocBegin"
+        description: "문서 처음으로"
+      - type: method
+        action: "ReplaceAll"
+        params:
+          find_text: "{{find_text}}"
+          replace_text: "{{replace_text}}"
+        description: "모두 바꾸기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("MoveDocBegin")
+          count = hwp.ReplaceAll("찾을 텍스트", "바꿀 텍스트")
+          print(f"바꾼 횟수: {count}")
+
+  # ============================================
+  # 글자 서식
+  # ============================================
+  - id: text_set_font
+    name: "폰트 설정"
+    description: "현재 선택 또는 이후 입력에 폰트를 설정합니다."
+    category: text
+
+    actions:
+      - type: method
+        action: "SetFont"
+        params:
+          face_name: "{{font_name|맑은 고딕}}"
+          height: "{{height|1000}}"
+          bold: "{{bold|0}}"
+          italic: "{{italic|0}}"
+          underline: "{{underline|0}}"
+        description: "폰트 설정"
+
+    examples:
+      - scenario: "맑은 고딕 12pt"
+        code: |
+          hwp.SetFont("맑은 고딕", 1200)
+      - scenario: "굵은 나눔고딕 10pt"
+        code: |
+          hwp.SetFont("나눔고딕", 1000, bold=1)
+
+  - id: text_bold
+    name: "굵게"
+    description: "선택된 텍스트에 굵게 서식을 적용합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "CharShapeBold"
+        description: "굵게 적용"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("CharShapeBold")
+
+  - id: text_italic
+    name: "기울임"
+    description: "선택된 텍스트에 기울임 서식을 적용합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "CharShapeItalic"
+        description: "기울임 적용"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("CharShapeItalic")
+
+  - id: text_underline
+    name: "밑줄"
+    description: "선택된 텍스트에 밑줄 서식을 적용합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "CharShapeUnderline"
+        description: "밑줄 적용"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("CharShapeUnderline")
+
+  - id: text_strikethrough
+    name: "취소선"
+    description: "선택된 텍스트에 취소선 서식을 적용합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "CharShapeStrikeout"
+        description: "취소선 적용"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("CharShapeStrikeout")
+
+  - id: text_superscript
+    name: "위 첨자"
+    description: "선택된 텍스트를 위 첨자로 설정합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "CharShapeSuperscript"
+        description: "위 첨자"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("CharShapeSuperscript")
+
+  - id: text_subscript
+    name: "아래 첨자"
+    description: "선택된 텍스트를 아래 첨자로 설정합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "CharShapeSubscript"
+        description: "아래 첨자"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("CharShapeSubscript")
+
+  # ============================================
+  # 문단 서식
+  # ============================================
+  - id: text_align_left
+    name: "왼쪽 정렬"
+    description: "문단을 왼쪽으로 정렬합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "ParagraphShapeAlignLeft"
+        description: "왼쪽 정렬"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ParagraphShapeAlignLeft")
+
+  - id: text_align_center
+    name: "가운데 정렬"
+    description: "문단을 가운데로 정렬합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "ParagraphShapeAlignCenter"
+        description: "가운데 정렬"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ParagraphShapeAlignCenter")
+
+  - id: text_align_right
+    name: "오른쪽 정렬"
+    description: "문단을 오른쪽으로 정렬합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "ParagraphShapeAlignRight"
+        description: "오른쪽 정렬"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ParagraphShapeAlignRight")
+
+  - id: text_align_justify
+    name: "양쪽 정렬"
+    description: "문단을 양쪽으로 정렬합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "ParagraphShapeAlignJustify"
+        description: "양쪽 정렬"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("ParagraphShapeAlignJustify")
+
+  - id: text_indent
+    name: "들여쓰기"
+    description: "문단 들여쓰기를 설정합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "ParagraphShapeIndentIncrease"
+        description: "들여쓰기 증가"
+
+    examples:
+      - scenario: "들여쓰기 증가"
+        code: |
+          hwp.run("ParagraphShapeIndentIncrease")
+      - scenario: "들여쓰기 감소"
+        code: |
+          hwp.run("ParagraphShapeIndentDecrease")
+
+  - id: text_line_spacing
+    name: "줄 간격 설정"
+    description: "문단의 줄 간격을 설정합니다."
+    category: text
+
+    actions:
+      - type: method
+        action: "SetPara"
+        params:
+          align: "{{align|0}}"
+          line_spacing: "{{line_spacing|160}}"
+        description: "문단 속성 설정"
+
+    examples:
+      - scenario: "160% 줄간격"
+        code: |
+          hwp.SetPara(line_spacing=160)
+      - scenario: "200% 줄간격 + 가운데 정렬"
+        code: |
+          hwp.SetPara(align=3, line_spacing=200)
+
+  # ============================================
+  # 삭제
+  # ============================================
+  - id: text_delete
+    name: "삭제"
+    description: "선택된 텍스트 또는 커서 뒤의 글자를 삭제합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "Delete"
+        description: "삭제 (Del)"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Delete")
+
+  - id: text_backspace
+    name: "백스페이스"
+    description: "커서 앞의 글자를 삭제합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "DeleteBack"
+        description: "백스페이스"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("DeleteBack")
+
+  - id: text_delete_word
+    name: "단어 삭제"
+    description: "현재 단어를 삭제합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "DeleteWord"
+        description: "단어 삭제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("DeleteWord")
+
+  - id: text_delete_line
+    name: "줄 삭제"
+    description: "현재 줄을 삭제합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "DeleteLine"
+        description: "줄 삭제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("DeleteLine")
+
+  # ============================================
+  # 클립보드
+  # ============================================
+  - id: text_copy
+    name: "복사"
+    description: "선택된 내용을 클립보드에 복사합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "Copy"
+        description: "복사"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Copy")
+
+  - id: text_cut
+    name: "잘라내기"
+    description: "선택된 내용을 잘라내기 합니다."
+    category: text
+
+    preconditions:
+      has_selection: true
+
+    actions:
+      - type: run
+        action: "Cut"
+        description: "잘라내기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Cut")
+
+  - id: text_paste
+    name: "붙여넣기"
+    description: "클립보드 내용을 붙여넣기 합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "Paste"
+        description: "붙여넣기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Paste")
+
+  # ============================================
+  # 실행 취소
+  # ============================================
+  - id: text_undo
+    name: "실행 취소"
+    description: "마지막 작업을 취소합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "Undo"
+        description: "실행 취소"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Undo")
+
+  - id: text_redo
+    name: "다시 실행"
+    description: "취소한 작업을 다시 실행합니다."
+    category: text
+
+    actions:
+      - type: run
+        action: "Redo"
+        description: "다시 실행"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("Redo")

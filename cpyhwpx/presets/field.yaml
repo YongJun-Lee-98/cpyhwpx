@@ -1,0 +1,466 @@
+# HWP Automation Presets - Field & Metatag
+# 필드 생성, 값 설정, 메타태그 관련 작업
+# Version: 1.0.0
+
+presets:
+  # ============================================
+  # 필드 생성
+  # ============================================
+  - id: field_create
+    name: "필드 생성"
+    description: "현재 커서 위치에 누름틀 필드를 생성합니다."
+    category: field
+
+    preconditions:
+      note: "문서가 열려 있어야 함"
+
+    actions:
+      - type: method
+        action: "CreateField"
+        params:
+          name: "{{field_name}}"
+          direction: "{{placeholder|}}"
+          memo: "{{memo|}}"
+        description: "필드 생성"
+
+    examples:
+      - scenario: "기본 필드 생성"
+        code: |
+          hwp.CreateField("customer_name")
+      - scenario: "플레이스홀더 있는 필드"
+        code: |
+          hwp.CreateField("date", direction="날짜를 입력하세요")
+      - scenario: "메모가 있는 필드"
+        code: |
+          hwp.CreateField("amount", direction="금액", memo="숫자만 입력")
+
+    error_handling:
+      common_errors:
+        - error: "필드 생성 실패"
+          cause: "같은 이름의 필드가 이미 존재"
+          solution: "다른 필드명을 사용하거나 기존 필드를 삭제하세요"
+
+  - id: field_create_multiple
+    name: "다중 필드 생성"
+    description: "여러 필드를 한 번에 생성합니다."
+    category: field
+
+    actions:
+      - type: loop
+        description: "각 필드 생성"
+        actions:
+          - type: method
+            action: "CreateField"
+            params:
+              name: "{{field.name}}"
+              direction: "{{field.direction}}"
+          - type: run
+            action: "BreakPara"
+            description: "문단 나누기"
+
+    examples:
+      - scenario: "여러 필드 생성"
+        code: |
+          fields = [
+              ("name", "이름을 입력하세요"),
+              ("phone", "전화번호를 입력하세요"),
+              ("email", "이메일을 입력하세요")
+          ]
+          for name, placeholder in fields:
+              hwp.CreateField(name, direction=placeholder)
+              hwp.run("BreakPara")
+
+  # ============================================
+  # 필드 조회
+  # ============================================
+  - id: field_get_list
+    name: "필드 목록 조회"
+    description: "문서 내 모든 필드 목록을 조회합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "GetFieldList"
+        params:
+          type: "{{type|0}}"
+        description: "필드 목록 조회"
+
+    field_types:
+      0: "모든 필드"
+      1: "셀 필드"
+      2: "누름틀 필드"
+      3: "메타태그 필드"
+
+    examples:
+      - scenario: "모든 필드 조회"
+        code: |
+          fields = hwp.GetFieldList()
+          print(fields)  # ['name', 'date', 'amount', ...]
+      - scenario: "누름틀 필드만 조회"
+        code: |
+          fields = hwp.GetFieldList(type=2)
+
+  - id: field_get_text
+    name: "필드 값 조회"
+    description: "특정 필드의 현재 값을 조회합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "GetFieldText"
+        params:
+          field: "{{field_name}}"
+        description: "필드 값 조회"
+
+    examples:
+      - scenario: "단일 필드 값 조회"
+        code: |
+          value = hwp.GetFieldText("customer_name")
+          print(value)
+      - scenario: "여러 필드 값 조회"
+        code: |
+          names = ["name", "phone", "email"]
+          for name in names:
+              print(f"{name}: {hwp.GetFieldText(name)}")
+
+  - id: field_exist
+    name: "필드 존재 확인"
+    description: "특정 이름의 필드가 존재하는지 확인합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "FieldExist"
+        params:
+          field: "{{field_name}}"
+        description: "필드 존재 확인"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          if hwp.FieldExist("customer_name"):
+              print("필드가 존재합니다")
+
+  # ============================================
+  # 필드 값 설정
+  # ============================================
+  - id: field_set_text
+    name: "필드 값 설정"
+    description: "특정 필드에 값을 설정합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "PutFieldText"
+        params:
+          field: "{{field_name}}"
+          text: "{{value}}"
+        description: "필드 값 설정"
+
+    examples:
+      - scenario: "단일 필드 값 설정"
+        code: |
+          hwp.PutFieldText("customer_name", "홍길동")
+
+  - id: field_batch_fill
+    name: "다중 필드 일괄 입력"
+    description: "여러 필드에 값을 일괄 입력합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "PutFieldText"
+        params:
+          field: "{{field_names}}"
+          text: "{{field_values}}"
+        description: "필드값 일괄 설정"
+
+    examples:
+      - scenario: "딕셔너리로 필드 채우기"
+        code: |
+          data = {
+              "name": "홍길동",
+              "date": "2024-01-01",
+              "amount": "1,000,000"
+          }
+          for field, value in data.items():
+              hwp.PutFieldText(field, value)
+      - scenario: "리스트로 일괄 설정"
+        code: |
+          hwp.PutFieldText(
+              ["name", "date", "amount"],
+              ["홍길동", "2024-01-01", "1,000,000"]
+          )
+
+  - id: field_fill_template
+    name: "템플릿 필드 채우기"
+    description: "템플릿 문서의 모든 필드를 데이터로 채웁니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "GetFieldList"
+        description: "필드 목록 조회"
+      - type: loop
+        description: "각 필드에 데이터 설정"
+        actions:
+          - type: method
+            action: "PutFieldText"
+            params:
+              field: "{{field}}"
+              text: "{{data[field]}}"
+
+    examples:
+      - scenario: "템플릿 채우기"
+        code: |
+          hwp.Open("template.hwp")
+          data = {
+              "name": "홍길동",
+              "date": "2024-01-01",
+              "amount": "1,000,000",
+              "company": "ABC회사"
+          }
+          fields = hwp.GetFieldList()
+          for field in fields:
+              if field in data:
+                  hwp.PutFieldText(field, data[field])
+          hwp.Save()
+
+  # ============================================
+  # 필드 이동
+  # ============================================
+  - id: field_move_to
+    name: "필드로 이동"
+    description: "지정된 필드로 커서를 이동합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "MoveToField"
+        params:
+          field: "{{field_name}}"
+          select: "{{select|false}}"
+        description: "필드로 이동"
+
+    examples:
+      - scenario: "필드로 이동"
+        code: |
+          hwp.MoveToField("customer_name")
+      - scenario: "필드로 이동하며 선택"
+        code: |
+          hwp.MoveToField("customer_name", select=True)
+
+  - id: field_move_to_next
+    name: "다음 필드로 이동"
+    description: "다음 필드로 커서를 이동합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "MoveToNextField"
+        description: "다음 필드로 이동"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.MoveToNextField()
+
+  - id: field_move_to_prev
+    name: "이전 필드로 이동"
+    description: "이전 필드로 커서를 이동합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "MoveToPrevField"
+        description: "이전 필드로 이동"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.MoveToPrevField()
+
+  # ============================================
+  # 필드 수정/삭제
+  # ============================================
+  - id: field_rename
+    name: "필드 이름 변경"
+    description: "필드의 이름을 변경합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "RenameField"
+        params:
+          old_name: "{{old_name}}"
+          new_name: "{{new_name}}"
+        description: "필드 이름 변경"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.RenameField("old_field", "new_field")
+
+  - id: field_delete
+    name: "필드 삭제"
+    description: "특정 필드를 삭제합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "DeleteFieldByName"
+        params:
+          field: "{{field_name}}"
+        description: "필드 삭제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.DeleteFieldByName("old_field")
+
+  - id: field_delete_all
+    name: "모든 필드 삭제"
+    description: "문서의 모든 필드를 삭제합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "DeleteAllFields"
+        description: "모든 필드 삭제"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.DeleteAllFields()
+
+    error_handling:
+      common_errors:
+        - error: "주의"
+          cause: "이 작업은 되돌릴 수 없음"
+          solution: "실행 전 문서를 백업하세요"
+
+  # ============================================
+  # 표 셀 필드
+  # ============================================
+  - id: field_set_cell_name
+    name: "셀에 필드명 설정"
+    description: "현재 셀에 필드명을 설정합니다."
+    category: field
+
+    preconditions:
+      cursor_in_cell: true
+      check_method: "IsCell"
+
+    actions:
+      - type: method
+        action: "SetCurFieldName"
+        params:
+          field: "{{field_name}}"
+          option: "{{option|0}}"
+        description: "셀 필드명 설정"
+
+    field_options:
+      0: "셀 영역"
+      1: "선택 영역"
+      2: "컨트롤"
+
+    examples:
+      - scenario: "셀에 필드명 설정"
+        code: |
+          hwp.SetCurFieldName("cell_data", option=0)
+
+  - id: field_table_cells
+    name: "표 셀들에 필드 설정"
+    description: "표의 여러 셀에 필드명을 일괄 설정합니다."
+    category: field
+
+    preconditions:
+      cursor_in_table: true
+
+    actions:
+      - type: run
+        action: "TableColPageUp"
+        description: "열 맨 위로"
+      - type: run
+        action: "TableColBegin"
+        description: "행 처음으로"
+      - type: loop
+        description: "각 셀에 필드명 설정"
+        actions:
+          - type: method
+            action: "SetCurFieldName"
+            params:
+              field: "{{field_name}}_{{row}}_{{col}}"
+              option: 0
+          - type: run
+            action: "TableRightCellAppend"
+
+    examples:
+      - scenario: "표 셀에 필드명 설정"
+        code: |
+          hwp.run("TableColPageUp")
+          hwp.run("TableColBegin")
+          rows = hwp.GetTableRowCount()
+          cols = hwp.GetTableColCount()
+          for row in range(rows):
+              for col in range(cols):
+                  hwp.SetCurFieldName(f"cell_{row}_{col}", option=0)
+                  hwp.run("TableRightCellAppend")
+
+  # ============================================
+  # 메타태그
+  # ============================================
+  - id: metatag_create
+    name: "메타태그 필드 생성"
+    description: "메타태그 필드를 생성합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "CreateMetaTag"
+        params:
+          name: "{{tag_name}}"
+          value: "{{value|}}"
+        description: "메타태그 생성"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.CreateMetaTag("author", "홍길동")
+
+  - id: metatag_get
+    name: "메타태그 값 조회"
+    description: "메타태그의 값을 조회합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "GetMetaTag"
+        params:
+          name: "{{tag_name}}"
+        description: "메타태그 조회"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          author = hwp.GetMetaTag("author")
+          print(author)
+
+  - id: metatag_set
+    name: "메타태그 값 설정"
+    description: "메타태그의 값을 설정합니다."
+    category: field
+
+    actions:
+      - type: method
+        action: "SetMetaTag"
+        params:
+          name: "{{tag_name}}"
+          value: "{{value}}"
+        description: "메타태그 설정"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.SetMetaTag("author", "홍길동")
+          hwp.SetMetaTag("version", "1.0")

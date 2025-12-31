@@ -1,0 +1,532 @@
+# HWP Automation Presets - Document Operations
+# 파일 I/O, 페이지 설정, 구역, 머리글/바닥글 등 문서 구조 작업
+# Version: 1.0.0
+
+presets:
+  # ============================================
+  # 파일 열기/저장
+  # ============================================
+  - id: document_open
+    name: "문서 열기"
+    description: "HWP 문서 파일을 엽니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "Open"
+        params:
+          filename: "{{file_path}}"
+          format: "{{format|HWP}}"
+        description: "문서 열기"
+
+    supported_formats:
+      - HWP       # 한글 문서
+      - HWPX      # 한글 2014 이상
+      - HWT       # 한글 서식
+      - DOC       # MS Word
+      - DOCX      # MS Word 2007+
+      - RTF       # 서식있는 텍스트
+      - TXT       # 일반 텍스트
+      - HTML      # 웹 문서
+
+    examples:
+      - scenario: "HWP 파일 열기"
+        code: |
+          hwp.Open("C:/documents/sample.hwp")
+      - scenario: "워드 파일 열기"
+        code: |
+          hwp.Open("C:/documents/sample.docx", format="DOCX")
+
+    error_handling:
+      common_errors:
+        - error: "파일을 찾을 수 없음"
+          cause: "경로가 잘못되었거나 파일이 없음"
+          solution: "파일 경로를 확인하세요"
+
+  - id: document_new
+    name: "새 문서"
+    description: "새 빈 문서를 생성합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "Clear"
+        description: "새 문서 생성"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.Clear()
+
+  - id: document_save
+    name: "저장"
+    description: "현재 문서를 저장합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "Save"
+        description: "문서 저장"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.Save()
+
+  - id: document_save_as
+    name: "다른 이름으로 저장"
+    description: "문서를 다른 이름/형식으로 저장합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "SaveAs"
+        params:
+          filename: "{{file_path}}"
+          format: "{{format|HWP}}"
+        description: "다른 이름으로 저장"
+
+    examples:
+      - scenario: "HWP로 저장"
+        code: |
+          hwp.SaveAs("C:/documents/new_file.hwp")
+      - scenario: "PDF로 저장"
+        code: |
+          hwp.SaveAs("C:/documents/output.pdf", format="PDF")
+      - scenario: "워드로 저장"
+        code: |
+          hwp.SaveAs("C:/documents/output.docx", format="DOCX")
+
+  - id: document_export_pdf
+    name: "PDF로 내보내기"
+    description: "문서를 PDF 형식으로 내보냅니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "SaveAs"
+        params:
+          filename: "{{pdf_path}}"
+          format: "PDF"
+        description: "PDF로 저장"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.SaveAs("C:/output/document.pdf", format="PDF")
+
+  - id: document_close
+    name: "문서 닫기"
+    description: "현재 문서를 닫습니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "Close"
+        description: "문서 닫기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.Close()
+
+  # ============================================
+  # 파일 삽입
+  # ============================================
+  - id: document_insert_file
+    name: "파일 삽입"
+    description: "현재 위치에 다른 문서 파일을 삽입합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "InsertFile"
+        params:
+          filename: "{{file_path}}"
+        description: "파일 삽입"
+
+    examples:
+      - scenario: "HWP 파일 삽입"
+        code: |
+          hwp.InsertFile("C:/documents/insert_me.hwp")
+
+  - id: document_insert_text_file
+    name: "텍스트 파일 삽입"
+    description: "현재 위치에 텍스트 파일 내용을 삽입합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "SetTextFile"
+        params:
+          filename: "{{file_path}}"
+        description: "텍스트 파일 삽입"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.SetTextFile("C:/documents/content.txt")
+
+  # ============================================
+  # 페이지 설정
+  # ============================================
+  - id: document_goto_page
+    name: "페이지 이동"
+    description: "지정된 페이지로 이동합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "GotoPage"
+        params:
+          pageIndex: "{{page_number}}"
+        description: "페이지 이동"
+
+    examples:
+      - scenario: "3페이지로 이동"
+        code: |
+          hwp.GotoPage(3)
+
+  - id: document_get_page_count
+    name: "페이지 수 조회"
+    description: "문서의 총 페이지 수를 조회합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "PageCount"
+        description: "페이지 수 조회"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          count = hwp.PageCount
+          print(f"총 페이지: {count}")
+
+  - id: document_page_break
+    name: "페이지 나누기"
+    description: "현재 위치에 페이지 나누기를 삽입합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "BreakPage"
+        description: "페이지 나누기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("BreakPage")
+
+  - id: document_section_break
+    name: "구역 나누기"
+    description: "현재 위치에 구역 나누기를 삽입합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "BreakSection"
+        description: "구역 나누기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("BreakSection")
+
+  - id: document_column_break
+    name: "단 나누기"
+    description: "현재 위치에 단 나누기를 삽입합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "BreakColumn"
+        description: "단 나누기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("BreakColumn")
+
+  # ============================================
+  # 머리글/바닥글
+  # ============================================
+  - id: document_header_edit
+    name: "머리글 편집"
+    description: "머리글 편집 모드로 진입합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "HeaderFooterModify"
+        description: "머리글/바닥글 편집 모드"
+
+    examples:
+      - scenario: "머리글 편집 및 내용 추가"
+        code: |
+          hwp.run("HeaderFooterModify")
+          hwp.InsertText("회사명 - 기밀문서")
+          hwp.run("CloseEx")
+
+  - id: document_footer_edit
+    name: "바닥글 편집"
+    description: "바닥글 편집 모드로 진입합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "HeaderFooterToNext"
+        description: "다음 머리글/바닥글로 (바닥글로 이동)"
+
+    examples:
+      - scenario: "바닥글 편집"
+        code: |
+          hwp.run("HeaderFooterModify")
+          hwp.run("HeaderFooterToNext")  # 바닥글로 이동
+          hwp.InsertText("페이지 ")
+          hwp.run("InsertPageNum")
+          hwp.run("CloseEx")
+
+  - id: document_header_footer_close
+    name: "머리글/바닥글 닫기"
+    description: "머리글/바닥글 편집 모드를 종료합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "CloseEx"
+        description: "편집 모드 종료"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("CloseEx")
+
+  - id: document_insert_page_num
+    name: "페이지 번호 삽입"
+    description: "현재 위치에 페이지 번호를 삽입합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "InsertPageNum"
+        description: "페이지 번호 삽입"
+
+    examples:
+      - scenario: "바닥글에 페이지 번호 추가"
+        code: |
+          hwp.run("HeaderFooterModify")
+          hwp.run("HeaderFooterToNext")  # 바닥글로
+          hwp.run("ParagraphShapeAlignCenter")  # 가운데 정렬
+          hwp.InsertText("- ")
+          hwp.run("InsertPageNum")
+          hwp.InsertText(" -")
+          hwp.run("CloseEx")
+
+  # ============================================
+  # 인쇄
+  # ============================================
+  - id: document_print
+    name: "인쇄"
+    description: "문서를 인쇄합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "FilePrint"
+        description: "인쇄 대화상자"
+
+    examples:
+      - scenario: "인쇄 대화상자 열기"
+        code: |
+          hwp.run("FilePrint")
+
+  - id: document_print_preview
+    name: "인쇄 미리보기"
+    description: "인쇄 미리보기를 표시합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "FilePrintPreview"
+        description: "인쇄 미리보기"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.run("FilePrintPreview")
+
+  # ============================================
+  # 문서 정보
+  # ============================================
+  - id: document_get_path
+    name: "문서 경로 조회"
+    description: "현재 문서의 파일 경로를 조회합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "Path"
+        description: "경로 조회"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          path = hwp.Path
+          print(f"파일 경로: {path}")
+
+  - id: document_get_filename
+    name: "파일명 조회"
+    description: "현재 문서의 파일명을 조회합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "FileName"
+        description: "파일명 조회"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          filename = hwp.FileName
+          print(f"파일명: {filename}")
+
+  - id: document_is_modified
+    name: "수정 여부 확인"
+    description: "문서가 수정되었는지 확인합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "IsModified"
+        description: "수정 여부 확인"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          if hwp.IsModified():
+              print("문서가 수정되었습니다")
+
+  # ============================================
+  # 보기 옵션
+  # ============================================
+  - id: document_view_zoom
+    name: "화면 배율 설정"
+    description: "화면 배율을 설정합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "{{zoom_action}}"
+        description: "배율 설정"
+
+    available_zooms:
+      - ViewZoom50        # 50%
+      - ViewZoom75        # 75%
+      - ViewZoom100       # 100%
+      - ViewZoom125       # 125%
+      - ViewZoom150       # 150%
+      - ViewZoom200       # 200%
+      - ViewZoomFitPage   # 페이지에 맞춤
+      - ViewZoomFitWidth  # 폭에 맞춤
+
+    examples:
+      - scenario: "100% 배율"
+        code: |
+          hwp.run("ViewZoom100")
+      - scenario: "폭에 맞춤"
+        code: |
+          hwp.run("ViewZoomFitWidth")
+
+  - id: document_view_option
+    name: "보기 옵션 설정"
+    description: "문서 보기 옵션을 설정합니다."
+    category: document
+
+    actions:
+      - type: run
+        action: "{{view_option}}"
+        description: "보기 옵션 설정"
+
+    available_options:
+      - ViewOptionCtrlMark     # 조판 부호 표시
+      - ViewOptionGuideLine    # 안내선 표시
+      - ViewOptionPaper        # 용지 표시
+      - ViewOptionParagraph    # 문단 표시
+      - ViewOptionParaMark     # 문단 부호 표시
+
+    examples:
+      - scenario: "조판 부호 표시"
+        code: |
+          hwp.run("ViewOptionCtrlMark")
+
+  # ============================================
+  # 문서 보호
+  # ============================================
+  - id: document_protect
+    name: "문서 보호"
+    description: "문서에 암호를 설정합니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "SetPassword"
+        params:
+          password: "{{password}}"
+        description: "암호 설정"
+
+    examples:
+      - scenario: "기본 사용"
+        code: |
+          hwp.SetPassword("mypassword")
+          hwp.Save()
+
+  # ============================================
+  # 템플릿 작업흐름
+  # ============================================
+  - id: document_template_workflow
+    name: "템플릿 작업 흐름"
+    description: "템플릿을 열고 필드를 채우고 저장하는 전체 흐름입니다."
+    category: document
+
+    actions:
+      - type: method
+        action: "Open"
+        params:
+          filename: "{{template_path}}"
+        description: "템플릿 열기"
+      - type: comment
+        description: "필드 채우기 (field_batch_fill 프리셋 참조)"
+      - type: method
+        action: "SaveAs"
+        params:
+          filename: "{{output_path}}"
+        description: "결과 저장"
+      - type: method
+        action: "Close"
+        description: "문서 닫기"
+
+    examples:
+      - scenario: "완전한 템플릿 처리"
+        code: |
+          # 템플릿 열기
+          hwp.Open("C:/templates/invoice_template.hwp")
+
+          # 필드 채우기
+          data = {
+              "customer_name": "홍길동",
+              "date": "2024-01-15",
+              "amount": "1,000,000",
+              "items": "상품 A, 상품 B"
+          }
+          for field, value in data.items():
+              hwp.PutFieldText(field, value)
+
+          # 결과 저장
+          hwp.SaveAs("C:/output/invoice_001.hwp")
+
+          # 또는 PDF로 저장
+          hwp.SaveAs("C:/output/invoice_001.pdf", format="PDF")
+
+          # 닫기
+          hwp.Close()

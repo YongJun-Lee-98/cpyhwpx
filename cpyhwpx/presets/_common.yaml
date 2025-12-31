@@ -1,0 +1,229 @@
+# HWP Automation Common Definitions
+# 공통 에러 처리, 상태 체크 메서드 정의
+# Version: 1.0.0
+
+# 에러 카탈로그
+error_catalog:
+  E001:
+    code: "E001"
+    name: "DocumentNotOpen"
+    message: "문서가 열려있지 않습니다"
+    check_method: "IsInitialized"
+    solution: "hwp.Open() 또는 hwp.Clear()로 문서를 먼저 열어주세요"
+    related_presets:
+      - document_open
+      - document_new
+
+  E002:
+    code: "E002"
+    name: "NotInTable"
+    message: "커서가 표 안에 있지 않습니다"
+    check_method: "IsCell"
+    solution: "hwp.GetIntoNthTable()로 표 안으로 이동하세요"
+    related_presets:
+      - table_goto_nth
+      - table_goto_first
+
+  E003:
+    code: "E003"
+    name: "FieldNotFound"
+    message: "지정된 필드를 찾을 수 없습니다"
+    check_method: "FieldExist"
+    solution: "GetFieldList()로 필드 목록을 확인하세요"
+    related_presets:
+      - field_get_list
+
+  E004:
+    code: "E004"
+    name: "ControlNotSelected"
+    message: "컨트롤이 선택되지 않았습니다"
+    check_method: "GetCurSelectedCtrl"
+    solution: "hwp.SelectCtrl()로 컨트롤을 선택하세요"
+    related_presets:
+      - shape_select
+
+  E005:
+    code: "E005"
+    name: "InvalidIndex"
+    message: "인덱스가 범위를 벗어났습니다"
+    solution: "유효한 인덱스 범위를 확인하세요 (0부터 시작, 음수는 뒤에서부터)"
+    related_presets: []
+
+  E006:
+    code: "E006"
+    name: "NoSelection"
+    message: "선택된 영역이 없습니다"
+    check_method: "GetSelectedText"
+    solution: "텍스트나 개체를 먼저 선택하세요"
+    related_presets:
+      - text_select_all
+      - text_select_paragraph
+
+  E007:
+    code: "E007"
+    name: "TableNotFound"
+    message: "문서에 표가 없습니다"
+    check_method: "GetCtrlList"
+    solution: "표가 있는 문서를 열거나 표를 생성하세요"
+    related_presets:
+      - table_create
+
+  E008:
+    code: "E008"
+    name: "FileNotFound"
+    message: "파일을 찾을 수 없습니다"
+    solution: "파일 경로를 확인하세요"
+    related_presets: []
+
+  E009:
+    code: "E009"
+    name: "SaveFailed"
+    message: "저장에 실패했습니다"
+    solution: "파일 경로와 권한을 확인하세요"
+    related_presets: []
+
+  E010:
+    code: "E010"
+    name: "ActionFailed"
+    message: "액션 실행에 실패했습니다"
+    solution: "액션 이름과 파라미터를 확인하세요"
+    related_presets: []
+
+# 상태 체크 메서드 매핑
+state_check_methods:
+  IsInitialized:
+    description: "HWP 객체가 초기화되었는지 확인"
+    returns: boolean
+    usage: "hwp.IsInitialized()"
+
+  IsCell:
+    description: "현재 커서가 표 셀 안에 있는지 확인"
+    returns: boolean
+    usage: "hwp.IsCell()"
+
+  GetSelectedText:
+    description: "현재 선택된 텍스트 반환 (빈 문자열이면 선택 없음)"
+    returns: string
+    usage: "hwp.GetSelectedText()"
+
+  GetCurSelectedCtrl:
+    description: "현재 선택된 컨트롤 반환 (None이면 선택 없음)"
+    returns: "Ctrl or None"
+    usage: "ctrl = hwp.GetCurSelectedCtrl()"
+
+  FieldExist:
+    description: "필드 존재 여부 확인"
+    returns: boolean
+    usage: "hwp.FieldExist(field_name)"
+
+  GetCtrlList:
+    description: "문서 내 모든 컨트롤 목록 반환"
+    returns: "list[Ctrl]"
+    usage: |
+      ctrls = hwp.GetCtrlList()
+      tables = [c for c in ctrls if c.CtrlID == 'tbl']
+
+  GetPos:
+    description: "현재 커서 위치 반환"
+    returns: "(list, para, pos)"
+    usage: "list_id, para, pos = hwp.GetPos()"
+
+  GetPageCount:
+    description: "문서 페이지 수 반환"
+    returns: integer
+    usage: "page_count = hwp.PageCount"
+
+# 컨트롤 타입 정의
+control_types:
+  tbl:
+    name: "표"
+    description: "Table control"
+  gso:
+    name: "그리기 개체"
+    description: "GShapeObject - 도형, 그룹, 캡션 등"
+  pic:
+    name: "그림"
+    description: "Picture control"
+  eqed:
+    name: "수식"
+    description: "Equation editor control"
+  ole:
+    name: "OLE 개체"
+    description: "OLE embedded object"
+  secd:
+    name: "구역"
+    description: "Section definition (무시됨)"
+  cold:
+    name: "단"
+    description: "Column definition (무시됨)"
+
+# 공통 파라미터 기본값
+default_parameters:
+  font:
+    face_name: "맑은 고딕"
+    height: 1000          # 10pt (100 unit = 1pt)
+    bold: 0
+    italic: 0
+    underline: 0
+
+  paragraph:
+    align: 0              # 0=양쪽, 1=왼쪽, 2=오른쪽, 3=가운데, 4=배분, 5=나눔
+    line_spacing: 160     # 160%
+    left_margin: 0
+    right_margin: 0
+
+  table:
+    rows: 2
+    cols: 2
+    treat_as_char: true
+    header: true
+
+  cell:
+    fill_color:
+      r: 217
+      g: 217
+      b: 217
+
+# 위치 이동 상수 (MoveID)
+move_positions:
+  Top: 0          # 문서 처음
+  Bottom: 1       # 문서 끝
+  ListBegin: 2    # 리스트 처음
+  ListEnd: 3      # 리스트 끝
+  ParaBegin: 4    # 문단 처음
+  ParaEnd: 5      # 문단 끝
+  LineBegin: 6    # 줄 처음
+  LineEnd: 7      # 줄 끝
+  WordBegin: 8    # 단어 처음
+  WordEnd: 9      # 단어 끝
+  NextPara: 10    # 다음 문단
+  PrevPara: 11    # 이전 문단
+  NextWord: 12    # 다음 단어
+  PrevWord: 13    # 이전 단어
+  NextLine: 14    # 다음 줄
+  PrevLine: 15    # 이전 줄
+  NextChar: 16    # 다음 글자
+  PrevChar: 17    # 이전 글자
+  NextPos: 18     # 다음 위치
+  PrevPos: 19     # 이전 위치
+
+# 정렬 상수
+alignment:
+  horizontal:
+    justify: 0    # 양쪽 정렬
+    left: 1       # 왼쪽 정렬
+    right: 2      # 오른쪽 정렬
+    center: 3     # 가운데 정렬
+    distribute: 4 # 배분 정렬
+    divide: 5     # 나눔 정렬
+  vertical:
+    top: 0        # 위쪽
+    center: 1     # 가운데
+    bottom: 2     # 아래쪽
+
+# 유닛 변환
+units:
+  pt_to_hwp: 100  # 1pt = 100 HWP unit
+  mm_to_hwp: 283  # 1mm ≈ 283 HWP unit (7200 / 25.4)
+  cm_to_hwp: 2835 # 1cm ≈ 2835 HWP unit
+  inch_to_hwp: 7200 # 1inch = 7200 HWP unit

@@ -1,0 +1,3027 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-12-31T09:06:52.869666",
+  "total_functions": 97,
+  "categories": [
+    {
+      "id": "misc",
+      "name": "기타",
+      "description": "분류되지 않은 함수",
+      "count": 26
+    },
+    {
+      "id": "table",
+      "name": "표",
+      "description": "표 생성, 셀 편집 관련",
+      "count": 16
+    },
+    {
+      "id": "file_io",
+      "name": "파일 I/O",
+      "description": "문서 열기, 저장, 내보내기 관련",
+      "count": 13
+    },
+    {
+      "id": "field",
+      "name": "필드/누름틀",
+      "description": "필드, 누름틀 관련",
+      "count": 9
+    },
+    {
+      "id": "text_editing",
+      "name": "텍스트 편집",
+      "description": "텍스트 삽입, 검색, 치환 관련",
+      "count": 8
+    },
+    {
+      "id": "cursor",
+      "name": "커서/위치",
+      "description": "커서 이동, 위치 조회 관련",
+      "count": 8
+    },
+    {
+      "id": "property",
+      "name": "속성",
+      "description": "문서/객체 속성 조회",
+      "count": 5
+    },
+    {
+      "id": "style",
+      "name": "스타일/서식",
+      "description": "글자 모양, 문단 모양, 스타일 관련",
+      "count": 4
+    },
+    {
+      "id": "init",
+      "name": "초기화/종료",
+      "description": "HWP 객체 생성, 초기화, 종료 관련",
+      "count": 3
+    },
+    {
+      "id": "shape",
+      "name": "도형/이미지",
+      "description": "그림, 도형, 개체 관련",
+      "count": 3
+    },
+    {
+      "id": "ctrl",
+      "name": "컨트롤",
+      "description": "컨트롤 객체 관련",
+      "count": 2
+    }
+  ],
+  "functions": [
+    {
+      "name": "SetActive_XHwpDocument",
+      "category": "misc",
+      "description": "이 문서를 활성화",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "__repr__",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "visible",
+          "description": "한/글 창을 화면에 표시할지 여부. 기본값은 True (표시)",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "new_instance",
+          "description": "새 인스턴스 생성 여부. False면 기존 열린 한/글에 연결 시도",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "register_module",
+          "description": "보안 모듈 자동 등록 여부. 기본값은 True",
+          "options": [],
+          "default": "True"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> import cpyhwpx",
+        ">>> hwp = cpyhwpx.Hwp()  # 기본: 화면 표시, 보안 모듈 자동 등록",
+        ">>> hwp = cpyhwpx.Hwp(visible=False)  # 백그라운드 실행",
+        ">>> hwp = cpyhwpx.Hwp(new_instance=False)  # 기존 한/글에 연결"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "add_doc",
+      "category": "misc",
+      "description": "새 창으로 문서 추가",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "add_tab",
+      "category": "misc",
+      "description": "새 탭으로 문서 추가",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "cancel",
+      "category": "misc",
+      "description": "현재 선택을 취소한다 (ESC 키와 동일)",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "check_registry_key",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "save",
+          "description": "True면 변경된 문서를 저장 후 종료, False면 저장하지 않고 종료",
+          "options": [],
+          "default": "False"
+        },
+        {
+          "name": "key_name",
+          "description": "",
+          "default": "\"FilePathCheckerModule\"",
+          "options": []
+        },
+        {
+          "name": "dll_path",
+          "description": "",
+          "default": "\"\"",
+          "options": []
+        },
+        {
+          "name": "module_type",
+          "description": "",
+          "default": "\"FilePathCheckDLL\"",
+          "options": []
+        },
+        {
+          "name": "module_data",
+          "description": "",
+          "default": "\"FilePathCheckerModule\"",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.quit()  # 저장하지 않고 종료",
+        ">>> hwp.quit(save=True)  # 변경사항 저장 후 종료"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "clear",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "option",
+          "description": "편집중인 문서의 내용에 대한 처리 방법 - 0: 변경 시 저장 여부 대화상자 표시 (hwpAskSave) - 1: 문서 내용 버림 (hwpDiscard, 기본값) - 2: 변경된 경우에만 저장 (hwpSaveIfDirty) - 3: 무조건 저장 (hwpSave)",
+          "options": [
+            "0: 변경 시 저장 여부 대화상자 표시 (hwpAskSave)",
+            "1: 문서 내용 버림 (hwpDiscard, 기본값)",
+            "2: 변경된 경우에만 저장 (hwpSaveIfDirty)",
+            "3: 무조건 저장 (hwpSave)"
+          ],
+          "default": "1"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.clear()  # 내용 버리고 새 문서",
+        ">>> hwp.clear(option=0)  # 저장 여부 물어봄"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "clear_field_text",
+      "category": "file_io",
+      "description": "문서 내 모든 필드의 텍스트를 비운다.",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "clear_pos_cache",
+      "category": "file_io",
+      "description": "메모리 관리를 위해 위치 저장이 많이 된 경우 호출 권장.",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "close",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "is_dirty",
+          "description": "True면 변경사항이 있을 때 닫지 않음, False면 변경사항 버리고 닫음",
+          "options": [],
+          "default": "False"
+        }
+      ],
+      "returns": "문서창을 닫으면 True, 실패하면 False",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "delete_all_fields",
+      "category": "misc",
+      "description": "모든 누름틀 필드를 삭제한다.",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "field_exist",
+      "category": "field",
+      "description": "",
+      "args": [
+        {
+          "name": "field",
+          "description": "필드 이름",
+          "options": []
+        }
+      ],
+      "returns": "존재하면 True, 없으면 False",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "fields_to_map",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "rows",
+          "description": "행 수 (기본값 2)",
+          "options": [],
+          "default": "2"
+        },
+        {
+          "name": "cols",
+          "description": "열 수 (기본값 2)",
+          "options": [],
+          "default": "2"
+        },
+        {
+          "name": "treat_as_char",
+          "description": "글자처럼 취급 여부 (True면 텍스트와 함께 이동)",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "width_type",
+          "description": "너비 정의 형식 (0=단에맞춤, 1=문단에맞춤, 2=임의값)",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "height_type",
+          "description": "높이 정의 형식 (0=자동, 1=임의값)",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "header",
+          "description": "1행을 제목행으로 설정",
+          "options": [],
+          "default": "False"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.create_table(3, 4)  # 3행 4열 표 생성",
+        ">>> hwp.create_table(5, 2, header=True)  # 제목행 있는 5행 2열 표"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "find_ctrl",
+      "category": "text_editing",
+      "description": "현재 위치의 컨트롤을 찾아 선택",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "find_dll_path",
+      "category": "text_editing",
+      "description": "DLL 파일 경로 자동 감지",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_col_count",
+      "category": "table",
+      "description": "표 열 수",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_ctrl_id",
+      "category": "ctrl",
+      "description": "컨트롤 ID",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_ctrl_type",
+      "category": "ctrl",
+      "description": "컨트롤 타입",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_cur_field_name",
+      "category": "field",
+      "description": "",
+      "args": [
+        {
+          "name": "option",
+          "description": "조회 옵션",
+          "options": [],
+          "default": "0"
+        }
+      ],
+      "returns": "필드 이름. 필드가 없으면 빈 문자열",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_cur_metatag_name",
+      "category": "property",
+      "description": "현재 메타태그명 조회",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_field_info",
+      "category": "field",
+      "description": "필드 정보 리스트 (HWPML2X 파싱)",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_field_list",
+      "category": "field",
+      "description": "",
+      "args": [
+        {
+          "name": "number",
+          "description": "동일 이름 필드 처리 방식 - 0: 이름만 나열 (hwpFieldPlain) - 1: 이름 뒤에 일련번호 {{#}} 추가 (hwpFieldNumber) - 2: 이름 뒤에 개수 {{#}} 추가 (hwpFieldCount)",
+          "options": [
+            "0: 이름만 나열 (hwpFieldPlain)",
+            "1: 이름 뒤에 일련번호 {{#}} 추가 (hwpFieldNumber)",
+            "2: 이름 뒤에 개수 {{#}} 추가 (hwpFieldCount)"
+          ],
+          "default": "1"
+        },
+        {
+          "name": "option",
+          "description": "필드 유형 필터 - 0: 모든 필드 - 0x01: 셀 필드만 (hwpFieldCell) - 0x02: 누름틀 필드만 (hwpFieldClickHere) - 0x04: 선택 영역 내 필드 (hwpFieldSelection)",
+          "options": [
+            "0: 모든 필드",
+            "0x01: 셀 필드만 (hwpFieldCell)",
+            "0x02: 누름틀 필드만 (hwpFieldClickHere)",
+            "0x04: 선택 영역 내 필드 (hwpFieldSelection)"
+          ],
+          "default": "0"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> fields = hwp.get_field_list(1)  # \"name{{0}}\\x02addr{{0}}\\x02tel{{0}}\""
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_field_text",
+      "category": "field",
+      "description": "",
+      "args": [
+        {
+          "name": "field",
+          "description": "필드 이름",
+          "options": []
+        },
+        {
+          "name": "idx",
+          "description": "동일 이름 필드 중 몇 번째인지 (0부터 시작)",
+          "options": [],
+          "default": "0"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> text = hwp.get_field_text(\"name\")",
+        ">>> text = hwp.get_field_text(\"title\", idx=1)  # 두 번째 title 필드"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_into_nth_table",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "n",
+          "description": "테이블 인덱스 (0부터 시작, 음수면 뒤에서부터)",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "select_cell",
+          "description": "True면 첫 번째 셀을 선택",
+          "options": [],
+          "default": "False"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.get_into_nth_table(0)  # 첫 번째 표로 이동",
+        ">>> hwp.get_into_nth_table(-1)  # 마지막 표로 이동"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_message_box_mode",
+      "category": "misc",
+      "description": "메시지 박스 모드 가져오기",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_parashape",
+      "category": "style",
+      "description": "set_parashape()에 전달하여 다른 문단에 동일한 문단모양을 적용할 수 있다.",
+      "args": [],
+      "returns": "문단모양 속성 딕셔너리 (Align, LineSpacing, LeftMargin 등)",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_pos",
+      "category": "cursor",
+      "description": "캐럿의 위치를 얻어온다.",
+      "args": [],
+      "returns": "",
+      "examples": [
+        ">>> list_id, para, pos = hwp.get_pos()",
+        ">>> print(f\"문단 {para}, 위치 {pos}\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_pos_by_set",
+      "category": "cursor",
+      "description": "현재 캐럿 위치를 내부 캐시에 저장하고 인덱스를 반환한다.",
+      "args": [],
+      "returns": "",
+      "examples": [
+        ">>> idx = hwp.get_pos_by_set()  # 현재 위치 저장",
+        ">>> # ... 다른 작업 후",
+        ">>> hwp.set_pos_by_set(idx)  # 저장한 위치로 복원"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_preset_names",
+      "category": "misc",
+      "description": "모든 프리셋 이름 목록",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_row_count",
+      "category": "table",
+      "description": "표 행 수",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_selected_text",
+      "category": "text_editing",
+      "description": "",
+      "args": [
+        {
+          "name": "keep_select",
+          "description": "True면 선택 상태 유지, False면 선택 해제",
+          "options": [],
+          "default": "False"
+        }
+      ],
+      "returns": "선택한 문자열",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_size",
+      "category": "misc",
+      "description": "크기 가져오기 (width, height)",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_table_col_count",
+      "category": "table",
+      "description": "현재 커서가 위치한 테이블의 열 개수를 반환한다.",
+      "args": [],
+      "returns": "열 개수. 테이블 안이 아니면 -1",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_table_row_count",
+      "category": "table",
+      "description": "현재 커서가 위치한 테이블의 행 개수를 반환한다.",
+      "args": [],
+      "returns": "행 개수. 테이블 안이 아니면 -1",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_table_xml",
+      "category": "table",
+      "description": "set_charshape()에 전달하여 다른 위치에 동일한 글자모양을 적용할 수 있다.",
+      "args": [],
+      "returns": "글자모양 속성 딕셔너리 (FaceNameHangul, Height, Bold 등)",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_text",
+      "category": "text_editing",
+      "description": "init_scan() 호출 후 반복 호출하여 문서 전체를 스캔한다. 사용이 끝나면 release_scan()을 반드시 호출해야 한다.",
+      "args": [],
+      "returns": "",
+      "examples": [
+        ">>> hwp.init_scan()",
+        ">>> while True:",
+        "...     state, text = hwp.get_text()",
+        "...     if state <= 1:",
+        "...         break",
+        "...     print(text)",
+        ">>> hwp.release_scan()"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_text_file",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "format",
+          "description": "파일 형식 (기본값: \"UNICODE\") - \"HWP\": HWP native format, BASE64 인코딩 - \"HWPML2X\": HWP 형식과 호환, 모든 정보 유지 - \"HTML\": 인터넷 문서 형식, 한/글 고유 서식 손실 - \"UNICODE\": 유니코드 텍스트, 서식 없음 - \"TEXT\": 일반 텍스트, 유니코드 정보 손실",
+          "options": [
+            "\"HWP\": HWP native format, BASE64 인코딩",
+            "\"HWPML2X\": HWP 형식과 호환, 모든 정보 유지",
+            "\"HTML\": 인터넷 문서 형식, 한/글 고유 서식 손실",
+            "\"UNICODE\": 유니코드 텍스트, 서식 없음",
+            "\"TEXT\": 일반 텍스트, 유니코드 정보 손실"
+          ],
+          "default": "\"UNICODE\""
+        },
+        {
+          "name": "option",
+          "description": "\"saveblock:true\" 지정 시 선택 블록만 추출",
+          "options": [],
+          "default": "\"\""
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> text = hwp.get_text_file()  # 전체 문서 텍스트",
+        ">>> text = hwp.get_text_file(format=\"HWPML2X\")  # HWPML 형식",
+        ">>> text = hwp.get_text_file(option=\"saveblock:true\")  # 선택 블록만"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "get_user_data",
+      "category": "misc",
+      "description": "사용자 데이터",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "get_viewstate",
+      "category": "misc",
+      "description": "뷰 상태 가져오기",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "init_scan",
+      "category": "text_editing",
+      "description": "",
+      "args": [
+        {
+          "name": "option",
+          "description": "찾을 대상 (기본값 0x07=모든 컨트롤) - 0x00: 본문만 (서브리스트 제외) - 0x01: char 타입 컨트롤 (줄바꿈, 문단끝 등) - 0x02: inline 타입 컨트롤 (필드 끝 등) - 0x04: extended 타입 컨트롤 (표, 그림 등)",
+          "options": [
+            "0x00: 본문만 (서브리스트 제외)",
+            "0x01: char 타입 컨트롤 (줄바꿈, 문단끝 등)",
+            "0x02: inline 타입 컨트롤 (필드 끝 등)",
+            "0x04: extended 타입 컨트롤 (표, 그림 등)"
+          ],
+          "default": "0x07"
+        },
+        {
+          "name": "range",
+          "description": "검색 범위 (기본값 0x77=문서 전체)",
+          "options": [],
+          "default": "0x77"
+        },
+        {
+          "name": "시작 위치 (상위 4비트)",
+          "description": " - 0x00: 캐럿 위치부터 - 0x10: 특정 위치부터 (spara, spos 사용) - 0x70: 문서 시작부터",
+          "options": [
+            "0x00: 캐럿 위치부터",
+            "0x10: 특정 위치부터 (spara, spos 사용)",
+            "0x70: 문서 시작부터"
+          ]
+        },
+        {
+          "name": "끝 위치 (하위 4비트)",
+          "description": " - 0x00: 캐럿 위치까지 - 0x01: 특정 위치까지 (epara, epos 사용) - 0x07: 문서 끝까지 - 0xFF: 선택 블록 내에서만 검색",
+          "options": [
+            "0x00: 캐럿 위치까지",
+            "0x01: 특정 위치까지 (epara, epos 사용)",
+            "0x07: 문서 끝까지",
+            "0xFF: 선택 블록 내에서만 검색"
+          ]
+        },
+        {
+          "name": "spara",
+          "description": "시작 문단 번호",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "spos",
+          "description": "시작 문자 위치",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "epara",
+          "description": "끝 문단 번호 (-1=끝까지)",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "epos",
+          "description": "끝 문자 위치 (-1=끝까지)",
+          "options": [],
+          "default": "-1"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.init_scan()  # 문서 전체 스캔",
+        ">>> hwp.init_scan(range=0xFF)  # 선택 블록만 스캔"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "initialize",
+      "category": "init",
+      "description": "일반적으로 Hwp() 생성자에서 자동 호출되므로 직접 호출할 필요가 없습니다.",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "insert",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "path",
+          "description": "삽입할 파일 경로",
+          "options": []
+        },
+        {
+          "name": "format",
+          "description": "파일 형식 (빈 문자열이면 자동 인식)",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "arg",
+          "description": "추가 옵션",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "move_doc_end",
+          "description": "True면 삽입 후 문서 끝으로 이동",
+          "options": [],
+          "default": "False"
+        }
+      ],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "insert_background_picture",
+      "category": "shape",
+      "description": "",
+      "args": [
+        {
+          "name": "path",
+          "description": "이미지 파일 경로",
+          "options": []
+        },
+        {
+          "name": "border_type",
+          "description": "적용 범위 (\"SelectedCell\", \"Page\" 등)",
+          "options": [],
+          "default": "\"SelectedCell\""
+        },
+        {
+          "name": "embedded",
+          "description": "True면 문서에 포함",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "fill_option",
+          "description": "채우기 옵션 (5=채우기)",
+          "options": [],
+          "default": "5"
+        },
+        {
+          "name": "effect",
+          "description": "그림 효과",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "watermark",
+          "description": "워터마크로 삽입",
+          "options": [],
+          "default": "False"
+        },
+        {
+          "name": "brightness",
+          "description": "밝기 조절 (-100~100)",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "contrast",
+          "description": "대비 조절 (-100~100)",
+          "options": [],
+          "default": "0"
+        }
+      ],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "insert_file",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "filename",
+          "description": "삽입할 파일의 전체 경로",
+          "options": []
+        },
+        {
+          "name": "keep_section",
+          "description": "구역 설정 유지 (1=유지, 0=무시)",
+          "options": [],
+          "default": "1"
+        },
+        {
+          "name": "keep_charshape",
+          "description": "글자 모양 유지 (1=유지, 0=무시)",
+          "options": [],
+          "default": "1"
+        },
+        {
+          "name": "keep_parashape",
+          "description": "문단 모양 유지 (1=유지, 0=무시)",
+          "options": [],
+          "default": "1"
+        },
+        {
+          "name": "keep_style",
+          "description": "스타일 유지 (1=유지, 0=무시)",
+          "options": [],
+          "default": "1"
+        },
+        {
+          "name": "move_doc_end",
+          "description": "True면 삽입 후 문서 끝으로 이동",
+          "options": [],
+          "default": "False"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.insert_file(\"C:/문서/template.hwp\")",
+        ">>> hwp.insert_file(\"내용.hwp\", keep_charshape=0)  # 현재 문서 글자모양 적용"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "insert_memo",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "text",
+          "description": "메모 내용",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "memo_type",
+          "description": "\"memo\" (일반 메모) 또는 \"revision\" (교정 메모)",
+          "options": [],
+          "default": "\"memo\""
+        }
+      ],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "insert_picture",
+      "category": "shape",
+      "description": "",
+      "args": [
+        {
+          "name": "path",
+          "description": "이미지 파일 경로",
+          "options": []
+        },
+        {
+          "name": "embedded",
+          "description": "True면 문서에 포함, False면 링크",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "sizeoption",
+          "description": "크기 옵션 - 0: 원본 크기 - 1: 지정 크기 (width, height 사용) - 2: 셀에 맞춤 (표 안에서) - 3: 셀에 맞춤 + 종횡비 유지",
+          "options": [
+            "0: 원본 크기",
+            "1: 지정 크기 (width, height 사용)",
+            "2: 셀에 맞춤 (표 안에서)",
+            "3: 셀에 맞춤 + 종횡비 유지"
+          ],
+          "default": "0"
+        },
+        {
+          "name": "reverse",
+          "description": "색상 반전",
+          "options": [],
+          "default": "False"
+        },
+        {
+          "name": "watermark",
+          "description": "워터마크로 삽입",
+          "options": [],
+          "default": "False"
+        },
+        {
+          "name": "effect",
+          "description": "그림 효과 (0=없음)",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "width",
+          "description": "너비 (sizeoption=1일 때, HwpUnit)",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "height",
+          "description": "높이 (sizeoption=1일 때, HwpUnit)",
+          "options": [],
+          "default": "0"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.insert_picture(\"C:/images/photo.jpg\")",
+        ">>> hwp.insert_picture(\"logo.png\", sizeoption=2)  # 셀에 맞춤"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "is_cell",
+      "category": "table",
+      "description": "셀 안 여부",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "is_empty",
+      "category": "property",
+      "description": "빈 문서 여부",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "is_initialized",
+      "category": "init",
+      "description": "HWP COM 객체가 초기화되었는지 확인합니다.",
+      "args": [],
+      "returns": "초기화 완료 시 True, 아니면 False",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "is_modified",
+      "category": "property",
+      "description": "수정 여부",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "is_picture",
+      "category": "shape",
+      "description": "그림인지 확인",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "is_table",
+      "category": "property",
+      "description": "표인지 확인",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "is_valid",
+      "category": "property",
+      "description": "유효한 문서인지",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "key_indicator",
+      "category": "cursor",
+      "description": "키 인디케이터 (suc, seccnt, secno, prnpageno, colno, line, pos, over, ctrlname)",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "mail_merge",
+      "category": "file_io",
+      "description": "메일 머지 실행",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "malgun_gothic",
+      "category": "misc",
+      "description": "맑은 고딕 프리셋",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "maximize_window",
+      "category": "misc",
+      "description": "창 최대화",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "minimize_window",
+      "category": "misc",
+      "description": "창 최소화",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "move_pos",
+      "category": "cursor",
+      "description": "",
+      "args": [
+        {
+          "name": "move_id",
+          "description": "이동 위치 지정 - 0: 루트 리스트의 특정 위치 (para, pos 사용) - 1: 현재 리스트의 특정 위치 (para, pos 사용) - 2: 문서 시작으로 이동 - 3: 문서 끝으로 이동 - 4: 현재 리스트 시작 - 5: 현재 리스트 끝 - 6: 문단 시작 - 7: 문단 끝 - 8: 단어 시작 - 9: 단어 끝 - 10: 다음 문단 시작 - 11: 이전 문단 끝 - 12: 한 글자 뒤로 - 13: 한 글자 앞으로 - 16: 한 글자 뒤로 (현재 리스트) - 17: 한 글자 앞으로 (현재 리스트) - 18: 한 단어 뒤로 - 19: 한 단어 앞으로 - 20: 한 줄 아래로 - 21: 한 줄 위로 - 22: 줄 시작 - 23: 줄 끝 - 100~107: 셀 이동 (좌/우/상/하/행시작/행끝/열시작/열끝) - 201: GetText() 실행 후 위치로 이동",
+          "options": [
+            "0: 루트 리스트의 특정 위치 (para, pos 사용)",
+            "1: 현재 리스트의 특정 위치 (para, pos 사용)",
+            "2: 문서 시작으로 이동",
+            "3: 문서 끝으로 이동",
+            "4: 현재 리스트 시작",
+            "5: 현재 리스트 끝",
+            "6: 문단 시작",
+            "7: 문단 끝",
+            "8: 단어 시작",
+            "9: 단어 끝",
+            "10: 다음 문단 시작",
+            "11: 이전 문단 끝",
+            "12: 한 글자 뒤로",
+            "13: 한 글자 앞으로",
+            "16: 한 글자 뒤로 (현재 리스트)",
+            "17: 한 글자 앞으로 (현재 리스트)",
+            "18: 한 단어 뒤로",
+            "19: 한 단어 앞으로",
+            "20: 한 줄 아래로",
+            "21: 한 줄 위로",
+            "22: 줄 시작",
+            "23: 줄 끝",
+            "100~107: 셀 이동 (좌/우/상/하/행시작/행끝/열시작/열끝)",
+            "201: GetText() 실행 후 위치로 이동"
+          ]
+        },
+        {
+          "name": "para",
+          "description": "move_id가 0 또는 1일 때 문단 번호",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "pos",
+          "description": "move_id가 0 또는 1일 때 문자 위치",
+          "options": [],
+          "default": "0"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.move_pos(2)  # 문서 시작으로",
+        ">>> hwp.move_pos(3)  # 문서 끝으로",
+        ">>> hwp.move_pos(1, 5, 0)  # 6번째 문단 시작으로"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "move_to_field",
+      "category": "cursor",
+      "description": "",
+      "args": [
+        {
+          "name": "field",
+          "description": "필드 이름. 이름 뒤에 {{#}}로 번호 지정 가능",
+          "options": []
+        },
+        {
+          "name": "idx",
+          "description": "동일 이름 필드 중 몇 번째인지 (0부터 시작)",
+          "options": [],
+          "default": "0"
+        },
+        {
+          "name": "text",
+          "description": "True면 누름틀 내부 텍스트로, False면 누름틀 코드로 이동",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "start",
+          "description": "True면 필드 처음으로, False면 끝으로 이동 (select=False일 때)",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "select",
+          "description": "True면 필드 내용을 블록 선택",
+          "options": [],
+          "default": "False"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.move_to_field(\"name\")  # name 필드로 이동",
+        ">>> hwp.move_to_field(\"name\", idx=1, select=True)  # 두 번째 name 필드 선택"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "move_to_metatag",
+      "category": "cursor",
+      "description": "",
+      "args": [
+        {
+          "name": "hypertext",
+          "description": "링크 대상 (책갈피 이름 또는 URL)",
+          "options": []
+        },
+        {
+          "name": "description",
+          "description": "툴팁으로 표시될 설명",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "tag",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "text",
+          "description": "",
+          "default": "\"\"",
+          "options": []
+        },
+        {
+          "name": "start",
+          "description": "",
+          "default": "True",
+          "options": []
+        },
+        {
+          "name": "select",
+          "description": "",
+          "default": "False",
+          "options": []
+        }
+      ],
+      "returns": "성공하면 True, 실패하면 False",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "nanum_gothic",
+      "category": "misc",
+      "description": "나눔고딕 프리셋",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "nanum_myeongjo",
+      "category": "misc",
+      "description": "나눔명조 프리셋",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "next",
+      "category": "misc",
+      "description": "다음 컨트롤",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "open",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "filename",
+          "description": "문서 파일의 전체경로",
+          "options": []
+        },
+        {
+          "name": "format",
+          "description": "문서 형식. 빈 문자열을 지정하면 자동으로 인식한다. - \"HWP\": 한/글 native format - \"HWP30\": 한/글 3.X/96/97 - \"HTML\": 인터넷 문서 - \"TEXT\": 아스키 텍스트 문서 - \"UNICODE\": 유니코드 텍스트 문서 - \"HWP20\": 한글 2.0 - \"HWPML2X\": HWPML 2.X 문서 - \"RTF\": 서식 있는 텍스트 문서 - \"OOXML\": MS 워드 문서 (docx)",
+          "options": [
+            "\"HWP\": 한/글 native format",
+            "\"HWP30\": 한/글 3.X/96/97",
+            "\"HTML\": 인터넷 문서",
+            "\"TEXT\": 아스키 텍스트 문서",
+            "\"UNICODE\": 유니코드 텍스트 문서",
+            "\"HWP20\": 한글 2.0",
+            "\"HWPML2X\": HWPML 2.X 문서",
+            "\"RTF\": 서식 있는 텍스트 문서",
+            "\"OOXML\": MS 워드 문서 (docx)"
+          ],
+          "default": "\"\""
+        },
+        {
+          "name": "arg",
+          "description": "세부 옵션. 형식: \"key:value;key:value;...\" - \"lock:true\": 파일을 오픈한 상태로 lock - \"notext:true\": 헤더 정보만 읽기 - \"template:true\": 템플릿으로 오픈 (lock=FALSE) - \"suspendpassword:true\": 암호 묻지 않음 - \"forceopen:true\": 읽기전용 대화상자 미표시 - \"setcurdir:true\": 파일 폴더로 현재 위치 변경",
+          "options": [
+            "\"lock:true\": 파일을 오픈한 상태로 lock",
+            "\"notext:true\": 헤더 정보만 읽기",
+            "\"template:true\": 템플릿으로 오픈 (lock=FALSE)",
+            "\"suspendpassword:true\": 암호 묻지 않음",
+            "\"forceopen:true\": 읽기전용 대화상자 미표시",
+            "\"setcurdir:true\": 파일 폴더로 현재 위치 변경"
+          ],
+          "default": "\"\""
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.open(\"C:/문서/example.hwp\")",
+        ">>> hwp.open(\"문서.hwpx\", format=\"\", arg=\"lock:false\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "open_pdf",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "text",
+          "description": "삽입할 문자열",
+          "options": []
+        },
+        {
+          "name": "pdf_path",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "this_window",
+          "description": "",
+          "default": "1",
+          "options": []
+        },
+        {
+          "name": "path",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "format",
+          "description": "",
+          "default": "\"bmp\"",
+          "options": []
+        },
+        {
+          "name": "attributes",
+          "description": "",
+          "default": "1",
+          "options": []
+        },
+        {
+          "name": "filename",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "sty_filepath",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "act_id",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "is_lock",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "pgno",
+          "description": "",
+          "default": "0",
+          "options": []
+        },
+        {
+          "name": "resolution",
+          "description": "",
+          "default": "300",
+          "options": []
+        },
+        {
+          "name": "depth",
+          "description": "",
+          "default": "24",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.insert_text(\"Hello world!\")",
+        ">>> hwp.insert_text(\"줄바꿈\\n다음 줄\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "prev",
+      "category": "misc",
+      "description": "이전 컨트롤",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "print_document",
+      "category": "file_io",
+      "description": "문서 인쇄 다이얼로그",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "put_field_text",
+      "category": "field",
+      "description": "",
+      "args": [
+        {
+          "name": "field",
+          "description": "필드 이름 (\\\\x02로 구분하여 여러 필드 지정 가능)",
+          "options": []
+        },
+        {
+          "name": "text",
+          "description": "채워 넣을 문자열 (\\\\x02로 구분하여 여러 텍스트 지정 가능)",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.put_field_text(\"name\", \"홍길동\")",
+        ">>> hwp.put_field_text(\"name\\x02addr\", \"홍길동\\x02서울시\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "register_module",
+      "category": "init",
+      "description": "",
+      "args": [
+        {
+          "name": "module_type",
+          "description": "모듈 타입 (예: \"FilePathCheckDLL\")",
+          "options": []
+        },
+        {
+          "name": "module_data",
+          "description": "모듈 데이터 (예: \"FilePathCheckerModule\")",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "release_scan",
+      "category": "text_editing",
+      "description": "텍스트 검색 작업이 끝나면 반드시 호출해야 한다.",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "rename_field",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "oldname",
+          "description": "기존 필드 이름 (\\\\x02로 구분하여 여러 필드 지정 가능)",
+          "options": []
+        },
+        {
+          "name": "newname",
+          "description": "새 필드 이름 (\\\\x02로 구분하여 여러 이름 지정 가능)",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.rename_field(\"title\", \"heading\")",
+        ">>> hwp.rename_field(\"old1\\x02old2\", \"new1\\x02new2\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "save",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "save_if_dirty",
+          "description": "True면 문서가 변경된 경우에만 저장, False면 무조건 저장",
+          "options": [],
+          "default": "True"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.save()  # 변경 시에만 저장",
+        ">>> hwp.save(save_if_dirty=False)  # 무조건 저장"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "save_as",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "filename",
+          "description": "문서 파일의 전체경로",
+          "options": []
+        },
+        {
+          "name": "format",
+          "description": "문서 형식. 기본값은 \"HWP\" - \"HWP\", \"HWPX\", \"HTML\", \"TEXT\", \"UNICODE\", \"PDF\" 등",
+          "options": [
+            "\"HWP\", \"HWPX\", \"HTML\", \"TEXT\", \"UNICODE\", \"PDF\" 등"
+          ],
+          "default": "\"HWP\""
+        },
+        {
+          "name": "arg",
+          "description": "세부 옵션. 형식: \"key:value;key:value;...\" - \"lock:true\": 저장 후 파일 lock 유지 - \"backup:false\": 백업 파일 생성 안 함 - \"compress:true\": 압축 여부 - \"fullsave:false\": 스토리지 완전 새로 생성 - \"prvimage:2\": 미리보기 이미지 (0=off, 1=BMP, 2=GIF) - \"prvtext:1\": 미리보기 텍스트 (0=off, 1=on) - \"export\": 다른 이름 저장 후 열린 문서는 유지",
+          "options": [
+            "\"lock:true\": 저장 후 파일 lock 유지",
+            "\"backup:false\": 백업 파일 생성 안 함",
+            "\"compress:true\": 압축 여부",
+            "\"fullsave:false\": 스토리지 완전 새로 생성",
+            "\"prvimage:2\": 미리보기 이미지 (0=off, 1=BMP, 2=GIF)",
+            "\"prvtext:1\": 미리보기 텍스트 (0=off, 1=on)",
+            "\"export\": 다른 이름 저장 후 열린 문서는 유지"
+          ],
+          "default": "\"\""
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.save_as(\"C:/문서/output.hwp\")",
+        ">>> hwp.save_as(\"output.pdf\", format=\"PDF\")",
+        ">>> hwp.save_as(\"backup.hwp\", arg=\"lock:false;backup:true\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "select_text",
+      "category": "text_editing",
+      "description": "",
+      "args": [
+        {
+          "name": "spara",
+          "description": "블록 시작 문단 번호",
+          "options": []
+        },
+        {
+          "name": "spos",
+          "description": "블록 시작 문자 위치",
+          "options": []
+        },
+        {
+          "name": "epara",
+          "description": "블록 끝 문단 번호",
+          "options": []
+        },
+        {
+          "name": "epos",
+          "description": "블록 끝 문자 위치",
+          "options": []
+        },
+        {
+          "name": "slist",
+          "description": "리스트 ID (기본값 0=본문)",
+          "options": [],
+          "default": "0"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.select_text(0, 0, 0, 10)  # 첫 문단 0~9번째 글자 선택",
+        ">>> hwp.select_text(2, 0, 2, -1)  # 세 번째 문단 전체 선택"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "select_text_by_get_pos",
+      "category": "text_editing",
+      "description": "",
+      "args": [
+        {
+          "name": "s_pos",
+          "description": "시작 위치 (list, para, pos) 튜플",
+          "options": []
+        },
+        {
+          "name": "e_pos",
+          "description": "끝 위치 (list, para, pos) 튜플",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> start = hwp.get_pos()",
+        ">>> # ... 이동 후",
+        ">>> end = hwp.get_pos()",
+        ">>> hwp.select_text_by_get_pos(start, end)"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_charshape",
+      "category": "style",
+      "description": "",
+      "args": [
+        {
+          "name": "props",
+          "description": "글자모양 속성 딕셔너리",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> shape = hwp.get_charshape()",
+        ">>> shape[\"Bold\"] = 1",
+        ">>> hwp.set_charshape(shape)"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_cur_field_name",
+      "category": "field",
+      "description": "",
+      "args": [
+        {
+          "name": "field",
+          "description": "필드 이름",
+          "options": []
+        },
+        {
+          "name": "direction",
+          "description": "안내문/지시문",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "memo",
+          "description": "설명/도움말",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "option",
+          "description": "설정 옵션",
+          "options": [],
+          "default": "0"
+        }
+      ],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_field_by_bracket",
+      "category": "field",
+      "description": "중괄호 구문을 필드로 변환 ({{name:direction:memo}}, [[name]])",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "set_field_view_option",
+      "category": "field",
+      "description": "",
+      "args": [
+        {
+          "name": "field_name",
+          "description": "삭제할 필드 이름",
+          "options": []
+        },
+        {
+          "name": "idx",
+          "description": "삭제할 필드 인덱스 (-1이면 동일 이름 필드 모두 삭제)",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "option",
+          "description": "",
+          "default": null,
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_font",
+      "category": "style",
+      "description": "",
+      "args": [
+        {
+          "name": "face_name",
+          "description": "글꼴 이름 (빈 문자열이면 미변경)",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "height",
+          "description": "글자 크기 (포인트 * 100, 예: 10pt = 1000). -1이면 미변경",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "bold",
+          "description": "굵게 (0=해제, 1=설정, -1=미변경)",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "italic",
+          "description": "기울임 (0=해제, 1=설정, -1=미변경)",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "text_color",
+          "description": "글자색 RGB (0xBBGGRR 형식). -1이면 미변경",
+          "options": [],
+          "default": "-1"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.set_font(\"맑은 고딕\", height=1200, bold=1)  # 맑은 고딕 12pt 굵게",
+        ">>> hwp.set_font(text_color=0x0000FF)  # 빨간색 글자"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_para",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "align_type",
+          "description": "정렬 (0=양쪽, 1=왼쪽, 2=가운데, 3=오른쪽). -1이면 미변경",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "line_spacing",
+          "description": "줄간격 (%). -1이면 미변경",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "left_margin",
+          "description": "왼쪽 여백 (HwpUnit). -1이면 미변경",
+          "options": [],
+          "default": "-1"
+        },
+        {
+          "name": "indentation",
+          "description": "들여쓰기 (HwpUnit). -1이면 미변경",
+          "options": [],
+          "default": "-1"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.set_para(align_type=2)  # 가운데 정렬",
+        ">>> hwp.set_para(line_spacing=160)  # 줄간격 160%"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_parashape",
+      "category": "style",
+      "description": "",
+      "args": [
+        {
+          "name": "props",
+          "description": "문단모양 속성 딕셔너리",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_pos",
+      "category": "cursor",
+      "description": "",
+      "args": [
+        {
+          "name": "list",
+          "description": "문서 내 리스트 ID (본문=0)",
+          "options": []
+        },
+        {
+          "name": "para",
+          "description": "문단 ID. 음수나 범위 초과 시 문서 시작으로 이동",
+          "options": []
+        },
+        {
+          "name": "pos",
+          "description": "문단 내 글자 위치. -1이면 해당 문단 끝으로 이동",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.set_pos(0, 0, 0)  # 본문 첫 문단 시작으로 이동",
+        ">>> hwp.set_pos(0, 2, -1)  # 세 번째 문단 끝으로 이동"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_pos_by_set",
+      "category": "cursor",
+      "description": "",
+      "args": [
+        {
+          "name": "idx",
+          "description": "get_pos_by_set()이 반환한 인덱스",
+          "options": []
+        }
+      ],
+      "returns": "성공하면 True, 실패하면 False",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_text_file",
+      "category": "file_io",
+      "description": "",
+      "args": [
+        {
+          "name": "data",
+          "description": "삽입할 문자열 데이터",
+          "options": []
+        },
+        {
+          "name": "format",
+          "description": "파일 형식 (기본값: \"HWPML2X\") - \"HWP\": HWP native format, BASE64 인코딩 - \"HWPML2X\": HWP 형식과 호환 - \"HTML\": 인터넷 문서 형식 - \"UNICODE\": 유니코드 텍스트 - \"TEXT\": 일반 텍스트",
+          "options": [
+            "\"HWP\": HWP native format, BASE64 인코딩",
+            "\"HWPML2X\": HWP 형식과 호환",
+            "\"HTML\": 인터넷 문서 형식",
+            "\"UNICODE\": 유니코드 텍스트",
+            "\"TEXT\": 일반 텍스트"
+          ],
+          "default": "\"HWPML2X\""
+        },
+        {
+          "name": "option",
+          "description": "\"insertfile\" 지정 시 현재 커서 위치에 삽입 (기본값)",
+          "options": [],
+          "default": "\"insertfile\""
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> content = hwp.get_text_file(format=\"HWPML2X\")",
+        ">>> hwp.set_text_file(content, format=\"HWPML2X\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "set_visible",
+      "category": "misc",
+      "description": "",
+      "args": [
+        {
+          "name": "name",
+          "description": "누름틀 필드의 이름 (중요: put_field_text 등에서 사용)",
+          "options": []
+        },
+        {
+          "name": "direction",
+          "description": "입력 전 보이는 안내문/지시문",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "memo",
+          "description": "필드에 대한 설명/도움말",
+          "options": [],
+          "default": "\"\""
+        },
+        {
+          "name": "visible",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "flag",
+          "description": "",
+          "default": "0",
+          "options": []
+        },
+        {
+          "name": "message",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "mode",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "page_index",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "mili",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "hwp_unit",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "h_align",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "v_align",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "text_align",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "para_head_align",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "text_art_align",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "line_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "line_width",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "border_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "end_style",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "end_size",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "num_format",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "heading_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "font_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "strike_out_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "underline_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "underline_shape",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "style_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "find_dir",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "pic_effect",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "zoom_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "pagenum_pos",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "page_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "print_range",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "print_method",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "print_device",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "print_paper",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "side_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "brush_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "fill_area",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "gradation",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "hatch_style",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "watermark_brush",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "table_format",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "page_break",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "table_target",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "tableswap",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "cell_apply",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "grid_method",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "grid_view_line",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "text_direction",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "text_wrap",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "text_flow",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "line_wrap",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "line_spacing",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "arc_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "draw_aspect",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "fillimage",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "shadow_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "image_format",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "restart",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "horz_rel",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "vert_rel",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "height_rel",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "width_rel",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "autonum",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "numbering",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "hwp_outline_style",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "hwp_outline_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "col_def_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "col_layout_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "gutter_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "break_latin_word",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "canonical",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "reverse",
+          "description": "",
+          "default": "False",
+          "options": []
+        },
+        {
+          "name": "crooked_slash",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "dbf_code",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "delimiter",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "diac_sym_mark",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "encrypt",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "handler",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "hash",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "hiding",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "macro_state",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "mail_type",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "prsnteffect",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "signature",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "slash",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "sort_delimiter",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "subt_pos",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "view_flag",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "user_info_id",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "value",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "tag",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "authority",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "cur_lang",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "l_year",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "l_month",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "l_day",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "l_leap",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "s_year",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "s_month",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "s_day",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "point",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "text",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "forward",
+          "description": "",
+          "default": "True",
+          "options": []
+        },
+        {
+          "name": "match_case",
+          "description": "",
+          "default": "False",
+          "options": []
+        },
+        {
+          "name": "regex",
+          "description": "",
+          "default": "False",
+          "options": []
+        },
+        {
+          "name": "replace_mode",
+          "description": "",
+          "default": "False",
+          "options": []
+        },
+        {
+          "name": "find_text",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "replace_text",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "src",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "dst",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "option",
+          "description": "",
+          "default": "4",
+          "options": []
+        },
+        {
+          "name": "act_id",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "ctrl_id",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "ctrl",
+          "description": "",
+          "default": null,
+          "options": []
+        },
+        {
+          "name": "num",
+          "description": "",
+          "default": null,
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.create_field(\"name\", direction=\"이름\", memo=\"이름 입력 필드\")",
+        ">>> hwp.put_field_text(\"name\", \"홍길동\")"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "table_cell_block_extend_abs",
+      "category": "table",
+      "description": "셀 블록 선택 확장 (절대 위치 기준)",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "table_col_begin",
+      "category": "table",
+      "description": "현재 행의 첫 번째 열로 이동",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "table_col_end",
+      "category": "table",
+      "description": "현재 행의 마지막 열로 이동",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "table_col_page_up",
+      "category": "table",
+      "description": "현재 열의 맨 위 셀로 이동",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "table_from_data",
+      "category": "table",
+      "description": "",
+      "args": [
+        {
+          "name": "data",
+          "description": "2차원 리스트 [[row1_col1, row1_col2], [row2_col1, row2_col2], ...]",
+          "options": []
+        },
+        {
+          "name": "treat_as_char",
+          "description": "글자처럼 취급 여부",
+          "options": [],
+          "default": "False"
+        },
+        {
+          "name": "header",
+          "description": "첫 행을 제목행으로 설정",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "header_bold",
+          "description": "제목행 볼드 처리",
+          "options": [],
+          "default": "True"
+        },
+        {
+          "name": "cell_fill_r/g/b",
+          "description": "제목행 배경색 RGB (-1이면 기본값)",
+          "options": []
+        },
+        {
+          "name": "cell_fill_r",
+          "description": "",
+          "default": "-1",
+          "options": []
+        },
+        {
+          "name": "cell_fill_g",
+          "description": "",
+          "default": "-1",
+          "options": []
+        },
+        {
+          "name": "cell_fill_b",
+          "description": "",
+          "default": "-1",
+          "options": []
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> data = [[\"이름\", \"나이\"], [\"홍길동\", \"30\"], [\"김철수\", \"25\"]]",
+        ">>> hwp.table_from_data(data, header=True)"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "table_left_cell",
+      "category": "table",
+      "description": "",
+      "args": [
+        {
+          "name": "r",
+          "description": "빨강 (0-255, 기본값 217)",
+          "options": [],
+          "default": "217"
+        },
+        {
+          "name": "g",
+          "description": "초록 (0-255, 기본값 217)",
+          "options": [],
+          "default": "217"
+        },
+        {
+          "name": "b",
+          "description": "파랑 (0-255, 기본값 217)",
+          "options": [],
+          "default": "217"
+        }
+      ],
+      "returns": "",
+      "examples": [
+        ">>> hwp.cell_fill()  # 연한 회색",
+        ">>> hwp.cell_fill(255, 255, 0)  # 노란색"
+      ],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": true
+    },
+    {
+      "name": "table_lower_cell",
+      "category": "table",
+      "description": "아래쪽 셀로 이동",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "table_right_cell",
+      "category": "table",
+      "description": "오른쪽 셀로 이동",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "table_right_cell_append",
+      "category": "table",
+      "description": "오른쪽 셀로 이동 (행 끝이면 다음 행 첫 셀로 이동)",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    },
+    {
+      "name": "table_upper_cell",
+      "category": "table",
+      "description": "위쪽 셀로 이동",
+      "args": [],
+      "returns": "",
+      "examples": [],
+      "requires": [],
+      "before": [],
+      "notes": [],
+      "is_detailed": false
+    }
+  ]
+}
